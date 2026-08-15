@@ -14,6 +14,16 @@ export type OrganId =
   | "pancreas"
   | "skin";
 
+export type SystemId =
+  | "cardiovascular"
+  | "respiratory"
+  | "nervous"
+  | "digestive"
+  | "urinary"
+  | "sensory"
+  | "integumentary"
+  | "endocrine";
+
 export type HotspotStructure = {
   id: string;
   /** Terminologia Anatomica term — the canonical identity across all locales. */
@@ -24,6 +34,8 @@ export type HotspotStructure = {
 
 export type OrganStructure = {
   id: OrganId;
+  systemId: SystemId;
+  systems: SystemId[];
   model: string;
   icon: string;
   accent: string;
@@ -37,6 +49,8 @@ export type OrganStructure = {
 export const organStructures: OrganStructure[] = [
   {
     id: "heart",
+    systemId: "cardiovascular",
+    systems: ["cardiovascular"],
     model: "/models/heart.glb",
     icon: "♥",
     accent: "#ee7c6a",
@@ -53,6 +67,8 @@ export const organStructures: OrganStructure[] = [
   },
   {
     id: "brain",
+    systemId: "nervous",
+    systems: ["nervous", "sensory"],
     model: "/models/brain.glb",
     icon: "◉",
     accent: "#c58696",
@@ -67,6 +83,8 @@ export const organStructures: OrganStructure[] = [
   },
   {
     id: "lungs",
+    systemId: "respiratory",
+    systems: ["respiratory"],
     model: "/models/lungs.glb",
     icon: "◍",
     accent: "#dd8f8b",
@@ -82,6 +100,8 @@ export const organStructures: OrganStructure[] = [
   },
   {
     id: "liver",
+    systemId: "digestive",
+    systems: ["digestive", "endocrine"],
     model: "/models/liver.glb",
     icon: "≈",
     accent: "#b86858",
@@ -95,6 +115,8 @@ export const organStructures: OrganStructure[] = [
   },
   {
     id: "kidneys",
+    systemId: "urinary",
+    systems: ["urinary", "endocrine"],
     model: "/models/kidneys.glb",
     icon: "∞",
     accent: "#c96963",
@@ -108,6 +130,8 @@ export const organStructures: OrganStructure[] = [
   },
   {
     id: "eyeball",
+    systemId: "sensory",
+    systems: ["sensory", "nervous"],
     model: "/models/eyeball.glb",
     icon: "⊙",
     accent: "#7294b9",
@@ -121,6 +145,8 @@ export const organStructures: OrganStructure[] = [
   },
   {
     id: "intestine",
+    systemId: "digestive",
+    systems: ["digestive", "endocrine"],
     model: "/models/intestine.glb",
     icon: "§",
     accent: "#d78b77",
@@ -134,6 +160,8 @@ export const organStructures: OrganStructure[] = [
   },
   {
     id: "pancreas",
+    systemId: "digestive",
+    systems: ["digestive", "endocrine"],
     model: "/models/pancreas.glb",
     icon: "◈",
     accent: "#c69a5e",
@@ -148,6 +176,8 @@ export const organStructures: OrganStructure[] = [
   },
   {
     id: "skin",
+    systemId: "integumentary",
+    systems: ["integumentary", "sensory"],
     model: "/models/skin.glb",
     icon: "▦",
     accent: "#c99277",

@@ -361,7 +361,7 @@ export const organs: OrganContentDictionary = {
     dailyFact: "ریزش حدود ۵۰۰ میلیون سلول در روز",
     medical: "سه لایه اپیدرم، درم و هیپودرم هر یک وظیفه کاملاً مشخصی را بر عهده دارند.",
     bloodSupply: "شبکه عروقی درمی",
-    funFact: "یک سانتی‌متر مربع پوست می‌تواند حاوی مئات غده عرق و مترها رگ خونی باشد.",
+    funFact: "یک سانتی‌متر مربع پوست می‌تواند حاوی صدها غده عرق و مترها رگ خونی باشد.",
     tissue: "لایه‌های اپیدرمی",
     comparison: "پوست در برابر روده",
     conditions: [
@@ -384,11 +384,11 @@ export const organs: OrganContentDictionary = {
         detail: "اعصاب، عروق و غدد"
       },
       hypodermis: {
-        label: "تحت الأدمة (زیرپوست)",
+        label: "هیپودرم (زیرپوست)",
         detail: "چربی و عایق حرارتی"
       },
       follicle: {
-        label: "جریب مو",
+        label: "فولیکول مو",
         detail: "مهارکننده ریشه هر مو"
       }
     }

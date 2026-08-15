@@ -1,6 +1,6 @@
 // import { env } from "cloudflare:workers";
 // import { drizzle } from "drizzle-orm/d1";
-import * as schema from "./schema";
+export * as schema from "./schema";
 
 export function getDb() {
   console.warn('[AI Studio] Database not connected — using mock');

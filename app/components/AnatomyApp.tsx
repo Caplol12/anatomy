@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import gsap from "gsap";
 import {
   ArrowRight,
@@ -13,6 +13,8 @@ import {
   FileText,
   Globe,
   Heart,
+  History,
+  Layers,
   LibraryBig,
   Microscope,
   NotebookPen,
@@ -24,13 +26,23 @@ import {
   X,
 } from "lucide-react";
 import { OrganViewer } from "./OrganViewer";
-import type { OrganId } from "../lib/anatomy-data";
+import { NotesModal } from "./NotesModal";
+import { SystemsExplorer } from "./SystemsExplorer";
+import { AtelierLogoIcon } from "./AtelierIcons";
+import { AtelierSplashLoader } from "./AtelierSplashLoader";
+import { TypewriterText } from "./TypewriterText";
+import type { OrganId, SystemId } from "../lib/anatomy-data";
+import { BODY_SYSTEMS, SYSTEM_CONFIG_BY_ID } from "../lib/systems";
 import type { LocaleConfig } from "../i18n/config";
 import { locales } from "../i18n/config";
 import { buildOrgans, indexOrgans, type Organ } from "../i18n/merge";
 import { format, type Dictionary, type UiDictionary } from "../i18n/types";
+import { getNotesServerSnapshot, getNotesSnapshot, saveNotes, subscribeNotes } from "../lib/notes";
+import { getFavoritesServerSnapshot, getFavoritesSnapshot, subscribeFavorites, toggleFavorite } from "../lib/favorites";
+import { getRecentsServerSnapshot, getRecentsSnapshot, recordOrganVisit, subscribeRecents } from "../lib/recents";
 
-type Modal = "lesson" | "quiz" | "animation" | "system" | null;
+type Modal = "lesson" | "quiz" | "animation" | "system" | "notes" | null;
+type NavView = "explore" | "systems";
 
 /**
  * Renders an organ illustration, or its accent glyph for organs that ship as a
@@ -122,23 +134,167 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
   const organById = useMemo(() => indexOrgans(organs), [organs]);
 
   const [organId, setOrganId] = useState<OrganId>("heart");
+  const [navView, setNavView] = useState<NavView>("explore");
+  const [selectedSystemId, setSelectedSystemId] = useState<SystemId | null>(null);
+  const [systemFilter, setSystemFilter] = useState<SystemId | "all">("all");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [sortMode, setSortMode] = useState<"system" | "name" | "recent">("system");
+  const [activeQuoteIndex, setActiveQuoteIndex] = useState(0);
   const [autoRotate, setAutoRotate] = useState(true);
   const [compare, setCompare] = useState(false);
   const [modal, setModal] = useState<Modal>(null);
   const [query, setQuery] = useState("");
   const [mobileLibrary, setMobileLibrary] = useState(false);
   const [quizActive, setQuizActive] = useState(false);
+  const notes = useSyncExternalStore(subscribeNotes, getNotesSnapshot, getNotesServerSnapshot);
+  const favorites = useSyncExternalStore(subscribeFavorites, getFavoritesSnapshot, getFavoritesServerSnapshot);
+  const recents = useSyncExternalStore(subscribeRecents, getRecentsSnapshot, getRecentsServerSnapshot);
+  const [notesDraft, setNotesDraft] = useState<{ organId: string; hotspotId?: string } | undefined>(undefined);
+  const [scrollProgress, setScrollProgress] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
+  const brandRef = useRef<HTMLElement>(null);
   const prefetched = useRef(new Set<OrganId>());
   const organ = organById[organId];
   const reference = organById[organId === "heart" ? "brain" : "heart"];
-  const filteredOrgans = useMemo(
-    () =>
-      organs.filter((item) =>
-        `${item.name} ${item.system}`.toLocaleLowerCase(locale.code).includes(query.toLocaleLowerCase(locale.code)),
-      ),
-    [organs, query, locale.code],
+
+  // Parallax subtle background movement
+  useEffect(() => {
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) return;
+
+    let rafId: number | null = null;
+    const handlePointerMove = (e: PointerEvent) => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        const xPercent = (e.clientX / window.innerWidth - 0.5) * 2;
+        const yPercent = (e.clientY / window.innerHeight - 0.5) * 2;
+        const moveX = `${(xPercent * 8).toFixed(1)}px`;
+        const moveY = `${(yPercent * 8).toFixed(1)}px`;
+        document.documentElement.style.setProperty("--bg-parallax-x", moveX);
+        document.documentElement.style.setProperty("--bg-parallax-y", moveY);
+      });
+    };
+
+    window.addEventListener("pointermove", handlePointerMove, { passive: true });
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      window.removeEventListener("pointermove", handlePointerMove);
+    };
+  }, []);
+
+  // Top viewport scroll progress
+  useEffect(() => {
+    const handleScroll = () => {
+      const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
+      if (totalScroll > 0) {
+        setScrollProgress(Math.min(1, Math.max(0, window.scrollY / totalScroll)));
+      } else {
+        setScrollProgress(0);
+      }
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Initial Brand Title Entry Stagger Animation (runs once on mount)
+  useEffect(() => {
+    if (!brandRef.current) return;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) return;
+
+    const chars = brandRef.current.querySelectorAll(".brand-char");
+    const sparkle = brandRef.current.querySelector(".brand-sparkle");
+
+    gsap.fromTo(
+      chars,
+      { opacity: 0, y: 12, rotate: 2 },
+      { opacity: 1, y: 0, rotate: 0, duration: 0.5, stagger: 0.025, ease: "power2.out" }
+    );
+    if (sparkle) {
+      gsap.fromTo(
+        sparkle,
+        { opacity: 0, scale: 0 },
+        { opacity: 1, scale: 1, duration: 0.4, delay: 0.3, ease: "back.out(2)" }
+      );
+    }
+  }, []);
+
+  const noteCountsByOrgan = useMemo(() => {
+    const map: Record<string, number> = {};
+    for (const n of notes) {
+      map[n.organId] = (map[n.organId] || 0) + 1;
+    }
+    return map;
+  }, [notes]);
+
+  const quotes = useMemo(
+    () => [
+      { line1: t.library.quoteLine1, line2: t.library.quoteLine2, sign: t.library.quoteSign },
+      { line1: t.library.quote2Line1, line2: t.library.quote2Line2, sign: t.library.quote2Sign },
+      { line1: t.library.quote3Line1, line2: t.library.quote3Line2, sign: t.library.quote3Sign },
+    ],
+    [t.library],
   );
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveQuoteIndex((prev) => (prev + 1) % quotes.length);
+    }, 10000);
+    return () => clearInterval(timer);
+  }, [quotes.length]);
+
+  useEffect(() => {
+    recordOrganVisit(organId);
+  }, [organId]);
+
+  const recentOrgans = useMemo(() => {
+    return recents
+      .map((id) => organById[id])
+      .filter(Boolean)
+      .slice(0, 4);
+  }, [recents, organById]);
+
+  const filteredAndSortedOrgans = useMemo(() => {
+    const cleanQuery = query.trim().toLocaleLowerCase(locale.code);
+    let list = organs.filter((item) => {
+      const matchesQuery =
+        !cleanQuery ||
+        `${item.name} ${item.system}`.toLocaleLowerCase(locale.code).includes(cleanQuery);
+      const matchesSystem =
+        systemFilter === "all" ||
+        (item.systems && item.systems.includes(systemFilter)) ||
+        item.systemId === systemFilter;
+      const matchesFavorites = !favoritesOnly || favorites.includes(item.id);
+      return matchesQuery && matchesSystem && matchesFavorites;
+    });
+
+    if (sortMode === "name") {
+      list = [...list].sort((a, b) => a.name.localeCompare(b.name, locale.code));
+    } else if (sortMode === "recent") {
+      list = [...list].sort((a, b) => {
+        const idxA = recents.indexOf(a.id);
+        const idxB = recents.indexOf(b.id);
+        const rankA = idxA === -1 ? 999 : idxA;
+        const rankB = idxB === -1 ? 999 : idxB;
+        return rankA - rankB;
+      });
+    }
+
+    return list;
+  }, [organs, query, locale.code, systemFilter, favoritesOnly, favorites, sortMode, recents]);
+
+  const groupedBySystem = useMemo(() => {
+    if (sortMode !== "system" || systemFilter !== "all" || favoritesOnly) return null;
+    const groups: Array<{ system: (typeof BODY_SYSTEMS)[number]; items: Organ[] }> = [];
+    for (const sys of BODY_SYSTEMS) {
+      const items = filteredAndSortedOrgans.filter((item) => item.systemId === sys.id);
+      if (items.length > 0) {
+        groups.push({ system: sys, items });
+      }
+    }
+    return groups.length > 0 ? groups : null;
+  }, [sortMode, systemFilter, favoritesOnly, filteredAndSortedOrgans]);
 
   useEffect(() => {
     if (!contentRef.current) return;
@@ -156,9 +312,15 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
       });
     }
     setOrganId(id);
+    recordOrganVisit(id);
     setMobileLibrary(false);
     setCompare(false);
     setQuizActive(false);
+  };
+
+  const handleOpenAddNote = (targetOrganId: string, hotspotId?: string) => {
+    setNotesDraft({ organId: targetOrganId, hotspotId });
+    setModal("notes");
   };
 
   // Warms the model in the HTTP cache while the pointer is still travelling,
@@ -169,19 +331,90 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
     void fetch(organById[id].model, { priority: "low" } as RequestInit).catch(() => {});
   };
 
+  const brandTitleText = locale.code === "fa" ? "دیجی آناتومی" : "Digi Anatomy";
+
   return (
-    <main className="app-shell">
-      <header className="topbar">
-        <button className="brand" type="button" onClick={() => selectOrgan("heart")} aria-label={t.brand.home}>
-          <strong>Anatomy Atelier<sup>✦</sup></strong>
-          <em>{t.brand.tagline}</em>
-        </button>
+    <>
+      <AtelierSplashLoader
+        brandTitle={brandTitleText}
+        tagline={t.brand.tagline}
+      />
+
+      <div
+        className="scroll-progress-indicator"
+        style={{ transform: `scaleX(${scrollProgress})` }}
+        aria-hidden="true"
+      />
+
+      <div className="ambient-canvas-decorations" aria-hidden="true">
+        <div className="decor-orb decor-orb-1" />
+        <div className="decor-orb decor-orb-2" />
+        <div className="decor-grid-accent" />
+      </div>
+
+      <main className="app-shell">
+        <header className="topbar">
+          <button
+            className="brand"
+            type="button"
+            onClick={() => {
+              setNavView("explore");
+              selectOrgan("heart");
+            }}
+            aria-label={t.brand.home}
+          >
+            <AtelierLogoIcon size={25} className="brand-crest" />
+            <strong ref={brandRef}>
+              {locale.dir === "rtl" || locale.script === "persian" || locale.script === "arabic" ? (
+                brandTitleText.split(" ").map((word, i, arr) => (
+                  <span key={i} className="brand-char brand-word">
+                    {word}
+                    {i < arr.length - 1 ? "\u00A0" : ""}
+                  </span>
+                ))
+              ) : (
+                brandTitleText.split("").map((ch, i) => (
+                  <span key={i} className="brand-char">
+                    {ch === " " ? "\u00A0" : ch}
+                  </span>
+                ))
+              )}
+              <sup className="brand-sparkle">✦</sup>
+            </strong>
+            <em>{t.brand.tagline}</em>
+          </button>
         <nav className="main-nav" aria-label="Primary navigation">
-          <button className="active"><Compass size={17} /> {t.nav.explore}</button>
-          <button><BrainCircuit size={17} /> {t.nav.systems}</button>
+          <button
+            className={navView === "explore" ? "active" : ""}
+            onClick={() => setNavView("explore")}
+          >
+            <Compass size={17} /> {t.nav.explore}
+          </button>
+          <button
+            className={navView === "systems" ? "active" : ""}
+            onClick={() => {
+              setNavView("systems");
+              setSelectedSystemId(null);
+            }}
+          >
+            <BrainCircuit size={17} /> {t.nav.systems}
+          </button>
           <button onClick={() => setModal("lesson")}><BookOpen size={17} /> {t.nav.lessons}</button>
-          <button><LibraryBig size={17} /> {t.nav.library}</button>
-          <button><NotebookPen size={17} /> {t.nav.notes}</button>
+          <button onClick={() => {
+            setNavView("explore");
+            setMobileLibrary(true);
+          }}><LibraryBig size={17} /> {t.nav.library}</button>
+          <button
+            onClick={() => {
+              setNotesDraft(undefined);
+              setModal("notes");
+            }}
+            className={`notes-nav-btn ${modal === "notes" ? "active" : ""}`}
+          >
+            <NotebookPen size={17} />
+            <span>{t.nav.notes}</span>
+            {notes.length > 0 && <span className="nav-note-count">{notes.length}</span>}
+          </button>
         </nav>
         <label className="search-box">
           <Search size={17} />
@@ -195,35 +428,379 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
       <div className="workspace">
         <aside className={`organ-library ${mobileLibrary ? "open" : ""}`}>
           <div className="panel-heading">
-            <span>{t.library.title}</span>
-            <button aria-label={t.library.close} className="mobile-close" onClick={() => setMobileLibrary(false)}><X size={17} /></button>
-            <button aria-label={t.library.saved}><Bookmark size={17} /></button>
-          </div>
-          <div className="organ-list">
-            {filteredOrgans.map((item) => (
+            <span className="panel-heading-title">
+              {navView === "systems" ? t.systems.title : t.library.title}
+              {navView !== "systems" && (
+                <span className="library-count-tag">
+                  {format(t.library.organsCount, { count: String(filteredAndSortedOrgans.length) })}
+                </span>
+              )}
+            </span>
+            <div className="panel-heading-actions">
+              {navView !== "systems" && (
+                <button
+                  type="button"
+                  aria-label={t.library.favoritesOnly}
+                  title={t.library.favoritesOnly}
+                  className={`library-header-btn ${favoritesOnly ? "active" : ""}`}
+                  onClick={() => setFavoritesOnly(!favoritesOnly)}
+                >
+                  <Bookmark size={15} fill={favoritesOnly ? "currentColor" : "none"} />
+                  {favorites.length > 0 && <span className="fav-counter-badge">{favorites.length}</span>}
+                </button>
+              )}
               <button
                 type="button"
-                key={item.id}
-                className={`organ-item ${organId === item.id ? "active" : ""}`}
-                onClick={() => selectOrgan(item.id)}
-                onPointerEnter={() => prefetchOrgan(item.id)}
-                onFocus={() => prefetchOrgan(item.id)}
-                style={{ "--item-accent": item.accent } as React.CSSProperties}
+                aria-label={t.notes.title}
+                title={t.notes.title}
+                className={`library-header-btn ${notes.length > 0 ? "has-notes" : ""}`}
+                onClick={() => {
+                  setNotesDraft(undefined);
+                  setModal("notes");
+                }}
               >
-                <span className="organ-glyph">
-                  <OrganArt organ={item} asset="thumb" alt="" size={47} />
-                </span>
-                <span><b>{item.name}</b><small>{item.system}</small></span>
-                {organId === item.id && <Heart className="favorite" size={14} fill="currentColor" />}
+                <NotebookPen size={15} />
+                {notes.length > 0 && <span className="library-note-dot" />}
               </button>
-            ))}
+              <button aria-label={t.library.close} className="mobile-close" onClick={() => setMobileLibrary(false)}>
+                <X size={17} />
+              </button>
+            </div>
           </div>
-          <button className="view-all" onClick={() => setQuery("")}>{t.library.viewAll} <ArrowRight size={14} /></button>
-          <blockquote>
-            <Sparkles size={18} />
-            <p>{t.library.quoteLine1}<br />{t.library.quoteLine2}</p>
-            <em>{t.library.quoteSign}</em>
-          </blockquote>
+
+          {navView === "systems" ? (
+            <SystemsExplorer
+              organs={organs}
+              activeOrganId={organId}
+              selectedSystemId={selectedSystemId}
+              onSelectSystem={setSelectedSystemId}
+              onSelectOrgan={(id) => selectOrgan(id as OrganId)}
+              t={t}
+              locale={locale}
+              noteCountsByOrgan={noteCountsByOrgan}
+              onPrefetchOrgan={(id) => prefetchOrgan(id as OrganId)}
+            />
+          ) : (
+            <>
+              {/* Recently viewed horizontal strip */}
+              {recentOrgans.length > 0 && (
+                <div className="recent-organs-strip" aria-label={t.library.recentlyViewed}>
+                  <div className="recent-strip-header">
+                    <History size={12} />
+                    <span>{t.library.recentlyViewed}</span>
+                  </div>
+                  <div className="recent-chips-list">
+                    {recentOrgans.map((rOrgan) => (
+                      <button
+                        key={`recent-${rOrgan.id}`}
+                        type="button"
+                        className={`recent-organ-chip ${organId === rOrgan.id ? "active" : ""}`}
+                        onClick={() => selectOrgan(rOrgan.id)}
+                        onPointerEnter={() => prefetchOrgan(rOrgan.id)}
+                        onFocus={() => prefetchOrgan(rOrgan.id)}
+                        style={{ "--item-accent": rOrgan.accent } as React.CSSProperties}
+                        title={rOrgan.name}
+                      >
+                        <span className="recent-chip-glyph">
+                          <OrganArt organ={rOrgan} asset="thumb" alt="" size={22} />
+                        </span>
+                        <span className="recent-chip-name">{rOrgan.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Sorting toolbar */}
+              <div className="library-sort-bar">
+                <div className="sort-pills-row" role="radiogroup" aria-label={t.library.sortBy}>
+                  <button
+                    type="button"
+                    className={`sort-pill ${sortMode === "system" ? "active" : ""}`}
+                    onClick={() => setSortMode("system")}
+                  >
+                    {t.library.sortBySystem}
+                  </button>
+                  <button
+                    type="button"
+                    className={`sort-pill ${sortMode === "name" ? "active" : ""}`}
+                    onClick={() => setSortMode("name")}
+                  >
+                    {t.library.sortByName}
+                  </button>
+                  <button
+                    type="button"
+                    className={`sort-pill ${sortMode === "recent" ? "active" : ""}`}
+                    onClick={() => setSortMode("recent")}
+                  >
+                    {t.library.sortByRecent}
+                  </button>
+                </div>
+                {(favoritesOnly || systemFilter !== "all" || query.trim() !== "" || sortMode !== "system") && (
+                  <button
+                    type="button"
+                    className="library-reset-btn"
+                    onClick={() => {
+                      setQuery("");
+                      setSystemFilter("all");
+                      setFavoritesOnly(false);
+                      setSortMode("system");
+                    }}
+                    title={t.library.clearFilters}
+                  >
+                    <X size={11} />
+                    <span>{t.library.clearFilters}</span>
+                  </button>
+                )}
+              </div>
+
+              {/* System Filter Chips */}
+              <div className="system-filter-chips-bar">
+                <button
+                  type="button"
+                  className={`system-chip-btn ${systemFilter === "all" ? "active" : ""}`}
+                  onClick={() => setSystemFilter("all")}
+                >
+                  <Layers size={12} />
+                  <span>{t.systems.allSystems}</span>
+                </button>
+                {BODY_SYSTEMS.map((sys) => {
+                  const SysIcon = sys.icon;
+                  const isChipActive = systemFilter === sys.id;
+                  return (
+                    <button
+                      key={sys.id}
+                      type="button"
+                      className={`system-chip-btn ${isChipActive ? "active" : ""}`}
+                      style={{
+                        "--chip-color": sys.badgeColor,
+                      } as React.CSSProperties}
+                      onClick={() => setSystemFilter(isChipActive ? "all" : sys.id)}
+                    >
+                      <SysIcon size={12} />
+                      <span>{t.systems[sys.id]}</span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Organ Cards List or Grouped View */}
+              {filteredAndSortedOrgans.length === 0 ? (
+                <div className="library-empty-state">
+                  {favoritesOnly ? (
+                    <>
+                      <div className="empty-state-icon bookmark-empty">
+                        <Bookmark size={26} />
+                      </div>
+                      <h4 className="empty-state-title">{t.library.noFavorites}</h4>
+                      <p className="empty-state-desc">{t.library.noFavoritesDesc}</p>
+                      <button
+                        type="button"
+                        className="empty-state-btn"
+                        onClick={() => setFavoritesOnly(false)}
+                      >
+                        {t.library.viewAll}
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <div className="empty-state-icon">
+                        <Search size={26} />
+                      </div>
+                      <h4 className="empty-state-title">{t.library.noResults}</h4>
+                      <button
+                        type="button"
+                        className="empty-state-btn"
+                        onClick={() => {
+                          setQuery("");
+                          setSystemFilter("all");
+                          setSortMode("system");
+                        }}
+                      >
+                        {t.library.clearFilters}
+                      </button>
+                    </>
+                  )}
+                </div>
+              ) : groupedBySystem ? (
+                <div className="organ-list grouped-list">
+                  {groupedBySystem.map((group) => {
+                    const SysIcon = group.system.icon;
+                    return (
+                      <div key={group.system.id} className="system-organ-group">
+                        <div
+                          className="system-group-header"
+                          style={{ "--group-color": group.system.badgeColor } as React.CSSProperties}
+                        >
+                          <span className="system-group-title">
+                            <SysIcon size={13} />
+                            <span>{t.systems[group.system.id]}</span>
+                          </span>
+                          <span className="system-group-count">{group.items.length}</span>
+                        </div>
+                        <div className="system-group-cards">
+                          {group.items.map((item) => {
+                            const isFav = favorites.includes(item.id);
+                            return (
+                              <button
+                                type="button"
+                                key={item.id}
+                                className={`organ-item ${organId === item.id ? "active" : ""} ${isFav ? "is-favorite" : ""}`}
+                                onClick={() => selectOrgan(item.id)}
+                                onPointerEnter={() => prefetchOrgan(item.id)}
+                                onFocus={() => prefetchOrgan(item.id)}
+                                style={{ "--item-accent": item.accent } as React.CSSProperties}
+                              >
+                                <span className="organ-accent-bar" />
+                                <span className="organ-glyph">
+                                  <OrganArt organ={item} asset="thumb" alt="" size={47} />
+                                </span>
+                                <span className="organ-meta">
+                                  <b>{item.name}</b>
+                                  <small>{item.system}</small>
+                                </span>
+                                <span className="organ-item-badges">
+                                  {noteCountsByOrgan[item.id] > 0 && (
+                                    <span
+                                      className="organ-note-pill"
+                                      title={format(t.notes.count, { count: String(noteCountsByOrgan[item.id]) })}
+                                    >
+                                      <NotebookPen size={11} />
+                                      <span>{noteCountsByOrgan[item.id]}</span>
+                                    </span>
+                                  )}
+                                  <span
+                                    role="button"
+                                    tabIndex={0}
+                                    className={`organ-fav-btn ${isFav ? "favorited" : ""}`}
+                                    title={isFav ? t.library.removeFromFavorites : t.library.addToFavorites}
+                                    aria-label={isFav ? t.library.removeFromFavorites : t.library.addToFavorites}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      toggleFavorite(item.id);
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter" || e.key === " ") {
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                        toggleFavorite(item.id);
+                                      }
+                                    }}
+                                  >
+                                    <Bookmark size={14} fill={isFav ? "currentColor" : "none"} />
+                                  </span>
+                                  {organId === item.id && <Heart className="favorite" size={14} fill="currentColor" />}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="organ-list">
+                  {filteredAndSortedOrgans.map((item) => {
+                    const isFav = favorites.includes(item.id);
+                    return (
+                      <button
+                        type="button"
+                        key={item.id}
+                        className={`organ-item ${organId === item.id ? "active" : ""} ${isFav ? "is-favorite" : ""}`}
+                        onClick={() => selectOrgan(item.id)}
+                        onPointerEnter={() => prefetchOrgan(item.id)}
+                        onFocus={() => prefetchOrgan(item.id)}
+                        style={{ "--item-accent": item.accent } as React.CSSProperties}
+                      >
+                        <span className="organ-accent-bar" />
+                        <span className="organ-glyph">
+                          <OrganArt organ={item} asset="thumb" alt="" size={47} />
+                        </span>
+                        <span className="organ-meta">
+                          <b>{item.name}</b>
+                          <small>{item.system}</small>
+                        </span>
+                        <span className="organ-item-badges">
+                          {noteCountsByOrgan[item.id] > 0 && (
+                            <span
+                              className="organ-note-pill"
+                              title={format(t.notes.count, { count: String(noteCountsByOrgan[item.id]) })}
+                            >
+                              <NotebookPen size={11} />
+                              <span>{noteCountsByOrgan[item.id]}</span>
+                            </span>
+                          )}
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            className={`organ-fav-btn ${isFav ? "favorited" : ""}`}
+                            title={isFav ? t.library.removeFromFavorites : t.library.addToFavorites}
+                            aria-label={isFav ? t.library.removeFromFavorites : t.library.addToFavorites}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleFavorite(item.id);
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.stopPropagation();
+                                e.preventDefault();
+                                toggleFavorite(item.id);
+                              }
+                            }}
+                          >
+                            <Bookmark size={14} fill={isFav ? "currentColor" : "none"} />
+                          </span>
+                          {organId === item.id && <Heart className="favorite" size={14} fill="currentColor" />}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {(favoritesOnly || systemFilter !== "all" || query.trim() !== "" || sortMode !== "system") && filteredAndSortedOrgans.length > 0 && (
+                <button
+                  type="button"
+                  className="view-all"
+                  onClick={() => {
+                    setQuery("");
+                    setSystemFilter("all");
+                    setFavoritesOnly(false);
+                    setSortMode("system");
+                  }}
+                >
+                  <span>{t.library.viewAll}</span>
+                  <ArrowRight size={14} />
+                </button>
+              )}
+
+              {/* Rotating Quote Card */}
+              <div className="library-quote-card">
+                <div className="quote-header">
+                  <span className="quote-icon-badge">
+                    <Sparkles size={13} />
+                  </span>
+                  <span className="quote-sign">{quotes[activeQuoteIndex].sign}</span>
+                </div>
+                <p className="quote-text">
+                  <span className="quote-l1">{quotes[activeQuoteIndex].line1}</span>
+                  <strong className="quote-l2">{quotes[activeQuoteIndex].line2}</strong>
+                </p>
+                <div className="quote-dots" aria-label="Quote switcher">
+                  {quotes.map((_, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      className={`quote-dot ${i === activeQuoteIndex ? "active" : ""}`}
+                      onClick={() => setActiveQuoteIndex(i)}
+                      aria-label={`Quote ${i + 1}`}
+                    />
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
         </aside>
 
         <OrganViewer
@@ -235,6 +812,8 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
           onCompare={() => setCompare(!compare)}
           quizActive={quizActive}
           onQuizExit={() => setQuizActive(false)}
+          notes={notes}
+          onAddNote={handleOpenAddNote}
         />
 
         <aside className="info-panel" ref={contentRef}>
@@ -245,8 +824,61 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
               <OrganArt organ={organ} asset="organ" alt="" size={92} />
             </span>
           </div>
+
+          <div className="info-systems-badges" data-reveal>
+            {organ.systems?.map((sysId) => {
+              const sysCfg = SYSTEM_CONFIG_BY_ID[sysId];
+              if (!sysCfg) return null;
+              const SysIcon = sysCfg.icon;
+              const isPrimary = sysId === organ.systemId;
+              return (
+                <button
+                  key={sysId}
+                  type="button"
+                  className={`info-system-pill ${isPrimary ? "primary" : "secondary"}`}
+                  style={{
+                    "--pill-accent": sysCfg.accent,
+                    "--pill-bg": sysCfg.badgeBg,
+                    "--pill-border": sysCfg.badgeBorder,
+                    "--pill-color": sysCfg.badgeColor,
+                  } as React.CSSProperties}
+                  onClick={() => {
+                    setNavView("systems");
+                    setSelectedSystemId(sysId);
+                  }}
+                  title={`${isPrimary ? t.systems.primarySystem : t.systems.secondarySystem}: ${t.systems[sysId]}`}
+                >
+                  <SysIcon size={13} />
+                  <span>{t.systems[sysId]}</span>
+                </button>
+              );
+            })}
+          </div>
+
           <p className="description" data-reveal>{organ.description}</p>
           <div className="rule" />
+
+          {noteCountsByOrgan[organ.id] > 0 && (
+            <div
+              className="organ-notes-badge-banner"
+              data-reveal
+              onClick={() => {
+                setNotesDraft({ organId: organ.id });
+                setModal("notes");
+              }}
+              role="button"
+              tabIndex={0}
+            >
+              <div className="banner-left">
+                <NotebookPen size={15} />
+                <span>
+                  {format(t.notes.count, { count: String(noteCountsByOrgan[organ.id]) })} {t.notes.title}
+                </span>
+              </div>
+              <ArrowRight size={13} />
+            </div>
+          )}
+
           <h2 data-reveal>{t.info.keyFacts}</h2>
           <dl className="key-facts">
             <div data-reveal><dt><span>◇</span> {t.info.size}</dt><dd><Measure>{organ.size}</Measure></dd></div>
@@ -256,12 +888,27 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
             <div data-reveal><dt><span>❋</span> {t.info.bloodSupply}</dt><dd><Measure>{organ.bloodSupply}</Measure></dd></div>
             <div data-reveal><dt><span>◈</span> {t.info.function}</dt><dd><Measure>{organ.function}</Measure></dd></div>
           </dl>
-          <div className="medical-note" data-reveal><Stethoscope size={16} /><p><b>{t.info.medical}</b>{organ.medical}</p></div>
-          <div className="fun-note" data-reveal><Sparkles size={15} /><p><b>{t.info.didYouKnow}</b>{organ.funFact}</p></div>
+          <div className="medical-note" data-reveal>
+            <Stethoscope size={16} />
+            <p>
+              <b>{t.info.medical}</b>
+              <TypewriterText key={`med-${organ.id}`} text={organ.medical} speedMs={12} />
+            </p>
+          </div>
+          <div className="fun-note" data-reveal>
+            <Sparkles size={15} />
+            <p>
+              <b>{t.info.didYouKnow}</b>
+              <TypewriterText key={`fun-${organ.id}`} text={organ.funFact} speedMs={12} />
+            </p>
+          </div>
           <button className="lesson-button" data-reveal onClick={() => setModal("lesson")}>{t.info.viewLesson} <ArrowRight size={16} /></button>
           <div className="action-grid" data-reveal>
             <button onClick={() => setModal("animation")}><Play size={15} /> {t.info.animate}</button>
             <button onClick={() => { setQuizActive(true); setModal(null); }}><CircleHelp size={15} /> {t.info.quiz}</button>
+            <button onClick={() => handleOpenAddNote(organ.id)}>
+              <NotebookPen size={15} /> {t.notes.addNote}
+            </button>
             <button onClick={() => setCompare(!compare)} className={compare ? "active" : ""}><Share2 size={15} /> {t.info.compare}</button>
           </div>
         </aside>
@@ -313,22 +960,45 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
           <button onClick={() => setModal("lesson")}>{t.cards.seeAll} <ArrowRight size={14} /></button>
         </article>
         <article className="system-card">
-          <header><div><em>{t.cards.whereItWorks}</em><h3>{organ.system}</h3></div><BrainCircuit size={17} /></header>
+          <header><div><em>{t.cards.whereItWorks}</em><h3>{t.systems[organ.systemId] || organ.system}</h3></div><BrainCircuit size={17} /></header>
           <button
             type="button"
             className="system-visual organ-card-image"
-            onClick={() => setModal("system")}
+            onClick={() => {
+              setNavView("systems");
+              setSelectedSystemId(organ.systemId);
+            }}
             aria-label={format(t.cards.systemAria, { organ: organ.name })}
           >
             <OrganArt organ={organ} asset="location" alt="" />
           </button>
-          <button onClick={() => setModal("system")}>{t.cards.seeSystem} <ArrowRight size={14} /></button>
+          <button onClick={() => {
+            setNavView("systems");
+            setSelectedSystemId(organ.systemId);
+          }}>{t.cards.seeSystem} <ArrowRight size={14} /></button>
         </article>
       </section>
 
-      {modal && <LearningModal type={modal} organ={organ} t={t} onClose={() => setModal(null)} />}
+      {modal === "notes" ? (
+        <NotesModal
+          currentOrgan={organ}
+          organs={organs}
+          t={t}
+          notes={notes}
+          onUpdateNotes={saveNotes}
+          onSelectOrgan={(id) => selectOrgan(id as OrganId)}
+          onClose={() => {
+            setModal(null);
+            setNotesDraft(undefined);
+          }}
+          initialDraft={notesDraft}
+        />
+      ) : (
+        modal && <LearningModal type={modal} organ={organ} t={t} onClose={() => setModal(null)} />
+      )}
       {mobileLibrary && <button className="drawer-backdrop" aria-label={t.library.close} onClick={() => setMobileLibrary(false)} />}
     </main>
+    </>
   );
 }
 

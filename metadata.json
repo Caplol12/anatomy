@@ -1,5 +1,5 @@
 {
-  "name": "Anatomy Atelier",
+  "name": "Digi Anatomy",
   "description": "Explore medically detailed 3D organs — heart, brain, lungs, liver, kidneys, eye, intestine, pancreas, and skin — through an elegant, interactive anatomy atelier.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]

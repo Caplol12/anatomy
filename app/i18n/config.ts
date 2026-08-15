@@ -1,6 +1,6 @@
 /** Script group decides which font pair loads. Keeping this separate from the
  *  locale list means adding a Latin-script locale costs no extra font weight. */
-export type ScriptGroup = "latin" | "cyrillic" | "devanagari" | "arabic" | "sc" | "jp" | "kr";
+export type ScriptGroup = "latin" | "cyrillic" | "devanagari" | "arabic" | "persian" | "sc" | "jp" | "kr";
 
 export type LocaleConfig = {
   code: string;
@@ -20,7 +20,7 @@ export const locales: LocaleConfig[] = [
   { code: "hi", nativeName: "हिन्दी", englishName: "Hindi", country: "India", dir: "ltr", script: "devanagari", intl: "hi_IN" },
   { code: "zh", nativeName: "中文", englishName: "Chinese", country: "China", dir: "ltr", script: "sc", intl: "zh_CN" },
   { code: "ar", nativeName: "العربية", englishName: "Arabic", country: "Egypt", dir: "rtl", script: "arabic", intl: "ar_EG" },
-  { code: "fa", nativeName: "فارسی", englishName: "Persian", country: "Iran", dir: "rtl", script: "arabic", intl: "fa_IR" },
+  { code: "fa", nativeName: "فارسی", englishName: "Persian", country: "Iran", dir: "rtl", script: "persian", intl: "fa_IR" },
   { code: "pt", nativeName: "Português", englishName: "Portuguese", country: "Brazil", dir: "ltr", script: "latin", intl: "pt_BR" },
   { code: "fr", nativeName: "Français", englishName: "French", country: "France", dir: "ltr", script: "latin", intl: "fr_FR" },
   { code: "de", nativeName: "Deutsch", englishName: "German", country: "Germany", dir: "ltr", script: "latin", intl: "de_DE" },
@@ -30,11 +30,11 @@ export const locales: LocaleConfig[] = [
   { code: "ko", nativeName: "한국어", englishName: "Korean", country: "South Korea", dir: "ltr", script: "kr", intl: "ko_KR" },
 ];
 
-export const defaultLocale = "en";
+export const defaultLocale = "fa";
 export const localeCodes = locales.map((locale) => locale.code);
 
 export function getLocale(code: string): LocaleConfig {
-  return locales.find((locale) => locale.code === code) ?? locales[0];
+  return locales.find((locale) => locale.code === code) ?? locales.find((l) => l.code === defaultLocale) ?? locales[0];
 }
 
 export function isLocale(code: string): boolean {
