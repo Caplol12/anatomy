@@ -66,7 +66,7 @@ export function NotesModal({
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const organMap = useMemo(() => {
-    return new Map(organs.map((o) => [o.id, o]));
+    return new Map<string, Organ>(organs.map((o) => [o.id, o]));
   }, [organs]);
 
   const activeFormOrgan = organMap.get(formOrganId) || currentOrgan;
