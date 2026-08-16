@@ -266,7 +266,6 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
       });
     }
     setOrganId(id);
-    recordOrganVisit(id);
     setMobileLibrary(false);
     setCompare(false);
     setQuizActive(false);
