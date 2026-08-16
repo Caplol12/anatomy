@@ -13,8 +13,6 @@ import {
   FileText,
   Globe,
   Heart,
-  History,
-  Layers,
   LibraryBig,
   Microscope,
   NotebookPen,
@@ -40,7 +38,6 @@ import { buildOrgans, indexOrgans, type Organ } from "../i18n/merge";
 import { format, type Dictionary, type UiDictionary } from "../i18n/types";
 import { getNotesServerSnapshot, getNotesSnapshot, saveNotes, subscribeNotes } from "../lib/notes";
 import { getFavoritesServerSnapshot, getFavoritesSnapshot, subscribeFavorites, toggleFavorite } from "../lib/favorites";
-import { getRecentsServerSnapshot, getRecentsSnapshot, recordOrganVisit, subscribeRecents } from "../lib/recents";
 
 type Modal = "lesson" | "quiz" | "animation" | "system" | "notes" | null;
 type NavView = "explore" | "systems";
@@ -137,9 +134,7 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
   const [organId, setOrganId] = useState<OrganId>("heart");
   const [navView, setNavView] = useState<NavView>("explore");
   const [selectedSystemId, setSelectedSystemId] = useState<SystemId | null>(null);
-  const [systemFilter, setSystemFilter] = useState<SystemId | "all">("all");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
-  const [sortMode, setSortMode] = useState<"system" | "name" | "recent">("system");
   const [activeQuoteIndex, setActiveQuoteIndex] = useState(0);
   const [autoRotate, setAutoRotate] = useState(true);
   const [compare, setCompare] = useState(false);
@@ -149,7 +144,6 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
   const [quizActive, setQuizActive] = useState(false);
   const notes = useSyncExternalStore(subscribeNotes, getNotesSnapshot, getNotesServerSnapshot);
   const favorites = useSyncExternalStore(subscribeFavorites, getFavoritesSnapshot, getFavoritesServerSnapshot);
-  const recents = useSyncExternalStore(subscribeRecents, getRecentsSnapshot, getRecentsServerSnapshot);
   const [notesDraft, setNotesDraft] = useState<{ organId: string; hotspotId?: string } | undefined>(undefined);
   const [scrollProgress, setScrollProgress] = useState(0);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -245,57 +239,16 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
     return () => clearInterval(timer);
   }, [quotes.length]);
 
-  useEffect(() => {
-    recordOrganVisit(organId);
-  }, [organId]);
-
-  const recentOrgans = useMemo(() => {
-    return recents
-      .map((id) => organById[id])
-      .filter(Boolean)
-      .slice(0, 4);
-  }, [recents, organById]);
-
-  const filteredAndSortedOrgans = useMemo(() => {
+  const filteredOrgans = useMemo(() => {
     const cleanQuery = query.trim().toLocaleLowerCase(locale.code);
-    let list = organs.filter((item) => {
+    return organs.filter((item) => {
       const matchesQuery =
         !cleanQuery ||
         `${item.name} ${item.system}`.toLocaleLowerCase(locale.code).includes(cleanQuery);
-      const matchesSystem =
-        systemFilter === "all" ||
-        (item.systems && item.systems.includes(systemFilter)) ||
-        item.systemId === systemFilter;
       const matchesFavorites = !favoritesOnly || favorites.includes(item.id);
-      return matchesQuery && matchesSystem && matchesFavorites;
+      return matchesQuery && matchesFavorites;
     });
-
-    if (sortMode === "name") {
-      list = [...list].sort((a, b) => a.name.localeCompare(b.name, locale.code));
-    } else if (sortMode === "recent") {
-      list = [...list].sort((a, b) => {
-        const idxA = recents.indexOf(a.id);
-        const idxB = recents.indexOf(b.id);
-        const rankA = idxA === -1 ? 999 : idxA;
-        const rankB = idxB === -1 ? 999 : idxB;
-        return rankA - rankB;
-      });
-    }
-
-    return list;
-  }, [organs, query, locale.code, systemFilter, favoritesOnly, favorites, sortMode, recents]);
-
-  const groupedBySystem = useMemo(() => {
-    if (sortMode !== "system" || systemFilter !== "all" || favoritesOnly) return null;
-    const groups: Array<{ system: (typeof BODY_SYSTEMS)[number]; items: Organ[] }> = [];
-    for (const sys of BODY_SYSTEMS) {
-      const items = filteredAndSortedOrgans.filter((item) => item.systemId === sys.id);
-      if (items.length > 0) {
-        groups.push({ system: sys, items });
-      }
-    }
-    return groups.length > 0 ? groups : null;
-  }, [sortMode, systemFilter, favoritesOnly, filteredAndSortedOrgans]);
+  }, [organs, query, locale.code, favoritesOnly, favorites]);
 
   useEffect(() => {
     if (!contentRef.current) return;
@@ -434,7 +387,7 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
               {navView === "systems" ? t.systems.title : t.library.title}
               {navView !== "systems" && (
                 <span className="library-count-tag">
-                  {format(t.library.organsCount, { count: String(filteredAndSortedOrgans.length) })}
+                  {format(t.library.organsCount, { count: String(filteredOrgans.length) })}
                 </span>
               )}
             </span>
@@ -484,110 +437,8 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
             />
           ) : (
             <>
-              {/* Recently viewed horizontal strip */}
-              {recentOrgans.length > 0 && (
-                <div className="recent-organs-strip" aria-label={t.library.recentlyViewed}>
-                  <div className="recent-strip-header">
-                    <History size={12} />
-                    <span>{t.library.recentlyViewed}</span>
-                  </div>
-                  <div className="recent-chips-list">
-                    {recentOrgans.map((rOrgan) => (
-                      <button
-                        key={`recent-${rOrgan.id}`}
-                        type="button"
-                        className={`recent-organ-chip ${organId === rOrgan.id ? "active" : ""}`}
-                        onClick={() => selectOrgan(rOrgan.id)}
-                        onPointerEnter={() => prefetchOrgan(rOrgan.id)}
-                        onFocus={() => prefetchOrgan(rOrgan.id)}
-                        style={{ "--item-accent": rOrgan.accent } as React.CSSProperties}
-                        title={rOrgan.name}
-                      >
-                        <span className="recent-chip-glyph">
-                          <OrganArt organ={rOrgan} asset="thumb" alt="" size={22} />
-                        </span>
-                        <span className="recent-chip-name">{rOrgan.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Sorting toolbar */}
-              <div className="library-sort-bar">
-                <div className="sort-pills-row" role="radiogroup" aria-label={t.library.sortBy}>
-                  <button
-                    type="button"
-                    className={`sort-pill ${sortMode === "system" ? "active" : ""}`}
-                    onClick={() => setSortMode("system")}
-                  >
-                    {t.library.sortBySystem}
-                  </button>
-                  <button
-                    type="button"
-                    className={`sort-pill ${sortMode === "name" ? "active" : ""}`}
-                    onClick={() => setSortMode("name")}
-                  >
-                    {t.library.sortByName}
-                  </button>
-                  <button
-                    type="button"
-                    className={`sort-pill ${sortMode === "recent" ? "active" : ""}`}
-                    onClick={() => setSortMode("recent")}
-                  >
-                    {t.library.sortByRecent}
-                  </button>
-                </div>
-                {(favoritesOnly || systemFilter !== "all" || query.trim() !== "" || sortMode !== "system") && (
-                  <button
-                    type="button"
-                    className="library-reset-btn"
-                    onClick={() => {
-                      setQuery("");
-                      setSystemFilter("all");
-                      setFavoritesOnly(false);
-                      setSortMode("system");
-                    }}
-                    title={t.library.clearFilters}
-                  >
-                    <X size={11} />
-                    <span>{t.library.clearFilters}</span>
-                  </button>
-                )}
-              </div>
-
-              {/* System Filter Chips */}
-              <div className="system-filter-chips-bar">
-                <button
-                  type="button"
-                  className={`system-chip-btn ${systemFilter === "all" ? "active" : ""}`}
-                  onClick={() => setSystemFilter("all")}
-                >
-                  <Layers size={12} />
-                  <span>{t.systems.allSystems}</span>
-                </button>
-                {BODY_SYSTEMS.map((sys) => {
-                  const SysIcon = sys.icon;
-                  const isChipActive = systemFilter === sys.id;
-                  return (
-                    <button
-                      key={sys.id}
-                      type="button"
-                      className={`system-chip-btn ${isChipActive ? "active" : ""}`}
-                      style={{
-                        "--chip-color": sys.badgeColor,
-                      } as React.CSSProperties}
-                      onClick={() => setSystemFilter(isChipActive ? "all" : sys.id)}
-                    >
-                      <SysIcon size={12} />
-                      <span>{t.systems[sys.id]}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Organ Cards List or Grouped View */}
-              {filteredAndSortedOrgans.length === 0 ? (
+              {/* Organ Cards List */}
+              {filteredOrgans.length === 0 ? (
                 <div className="library-empty-state">
                   {favoritesOnly ? (
                     <>
@@ -615,8 +466,7 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
                         className="empty-state-btn"
                         onClick={() => {
                           setQuery("");
-                          setSystemFilter("all");
-                          setSortMode("system");
+                          setFavoritesOnly(false);
                         }}
                       >
                         {t.library.clearFilters}
@@ -624,86 +474,9 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
                     </>
                   )}
                 </div>
-              ) : groupedBySystem ? (
-                <div className="organ-list grouped-list">
-                  {groupedBySystem.map((group) => {
-                    const SysIcon = group.system.icon;
-                    return (
-                      <div key={group.system.id} className="system-organ-group">
-                        <div
-                          className="system-group-header"
-                          style={{ "--group-color": group.system.badgeColor } as React.CSSProperties}
-                        >
-                          <span className="system-group-title">
-                            <SysIcon size={13} />
-                            <span>{t.systems[group.system.id]}</span>
-                          </span>
-                          <span className="system-group-count">{group.items.length}</span>
-                        </div>
-                        <div className="system-group-cards">
-                          {group.items.map((item) => {
-                            const isFav = favorites.includes(item.id);
-                            return (
-                              <button
-                                type="button"
-                                key={item.id}
-                                className={`organ-item ${organId === item.id ? "active" : ""} ${isFav ? "is-favorite" : ""}`}
-                                onClick={() => selectOrgan(item.id)}
-                                onPointerEnter={() => prefetchOrgan(item.id)}
-                                onFocus={() => prefetchOrgan(item.id)}
-                                style={{ "--item-accent": item.accent } as React.CSSProperties}
-                              >
-                                <span className="organ-accent-bar" />
-                                <span className="organ-glyph">
-                                  <OrganArt organ={item} asset="thumb" alt="" size={47} />
-                                </span>
-                                <span className="organ-meta">
-                                  <b>{item.name}</b>
-                                  <small>{item.system}</small>
-                                </span>
-                                <span className="organ-item-badges">
-                                  {noteCountsByOrgan[item.id] > 0 && (
-                                    <span
-                                      className="organ-note-pill"
-                                      title={format(t.notes.count, { count: String(noteCountsByOrgan[item.id]) })}
-                                    >
-                                      <NotebookPen size={11} />
-                                      <span>{noteCountsByOrgan[item.id]}</span>
-                                    </span>
-                                  )}
-                                  <span
-                                    role="button"
-                                    tabIndex={0}
-                                    className={`organ-fav-btn ${isFav ? "favorited" : ""}`}
-                                    title={isFav ? t.library.removeFromFavorites : t.library.addToFavorites}
-                                    aria-label={isFav ? t.library.removeFromFavorites : t.library.addToFavorites}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      toggleFavorite(item.id);
-                                    }}
-                                    onKeyDown={(e) => {
-                                      if (e.key === "Enter" || e.key === " ") {
-                                        e.stopPropagation();
-                                        e.preventDefault();
-                                        toggleFavorite(item.id);
-                                      }
-                                    }}
-                                  >
-                                    <Bookmark size={14} fill={isFav ? "currentColor" : "none"} />
-                                  </span>
-                                  {organId === item.id && <Heart className="favorite" size={14} fill="currentColor" />}
-                                </span>
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
               ) : (
                 <div className="organ-list">
-                  {filteredAndSortedOrgans.map((item) => {
+                  {filteredOrgans.map((item) => {
                     const isFav = favorites.includes(item.id);
                     return (
                       <button
@@ -761,15 +534,13 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
                 </div>
               )}
 
-              {(favoritesOnly || systemFilter !== "all" || query.trim() !== "" || sortMode !== "system") && filteredAndSortedOrgans.length > 0 && (
+              {(favoritesOnly || query.trim() !== "") && filteredOrgans.length > 0 && (
                 <button
                   type="button"
                   className="view-all"
                   onClick={() => {
                     setQuery("");
-                    setSystemFilter("all");
                     setFavoritesOnly(false);
-                    setSortMode("system");
                   }}
                 >
                   <span>{t.library.viewAll}</span>
