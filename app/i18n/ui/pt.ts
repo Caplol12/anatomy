@@ -228,6 +228,11 @@ export const ui: UiDictionary = {
     integumentary: "Sistema Tegumentar",
     integumentaryDesc: "Forma a barreira protetora externa, regula a temperatura, evita a desidratação e sintetiza vitamina D.",
     endocrine: "Sistema Endócrino",
-    endocrineDesc: "Regula o metabolismo, crescimento e homeostase corporal por meio da secreção hormonal.",
+    endocrineDesc: "Regula o metabolismo, crescimento e homeostase corporal por meio da secreção hormonal."
+  },
+  theme: {
+    toggle: "Alternar tema",
+    light: "Tema claro",
+    dark: "Tema escuro"
   }
 };

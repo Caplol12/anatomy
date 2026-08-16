@@ -164,6 +164,9 @@ export type UiDictionary = {
     endocrine: string;
     endocrineDesc: string;
   };
+  theme: {
+    toggle: string; light: string; dark: string;
+  };
 };
 
 export type Dictionary = { ui: UiDictionary; organs: OrganContentDictionary };

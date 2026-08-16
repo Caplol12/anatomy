@@ -228,6 +228,11 @@ export const ui: UiDictionary = {
     integumentary: "Integumentary System",
     integumentaryDesc: "Forms the body's outer protective barrier, regulates temperature, prevents dehydration, and synthesizes Vitamin D.",
     endocrine: "Endocrine System",
-    endocrineDesc: "Regulates metabolism, growth, and tissue homeostasis through specialized hormone-secreting cells and glands.",
+    endocrineDesc: "Regulates metabolism, growth, and tissue homeostasis through specialized hormone-secreting cells and glands."
+  },
+  theme: {
+    toggle: "Switch theme",
+    light: "Light theme",
+    dark: "Dark theme"
   }
 };

@@ -72,6 +72,19 @@ export async function generateMetadata({
 
 export const viewport: Viewport = { themeColor: "#f7f0e7" };
 
+const themeInitScript = `
+(function() {
+  try {
+    var saved = localStorage.getItem('anatomy_theme');
+    if (saved === 'dark' || saved === 'light') {
+      document.documentElement.setAttribute('data-theme', saved);
+    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  } catch (e) {}
+})();
+`;
+
 export default async function LocaleLayout({
   children,
   params,
@@ -81,7 +94,10 @@ export default async function LocaleLayout({
   const config = getLocale(locale);
 
   return (
-    <html lang={config.code} dir={config.dir}>
+    <html lang={config.code} dir={config.dir} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className={fontClassName(config.script)}>{children}</body>
     </html>
   );

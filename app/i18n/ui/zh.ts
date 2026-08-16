@@ -228,6 +228,11 @@ export const ui: UiDictionary = {
     integumentary: "皮膜系统",
     integumentaryDesc: "构筑机体外层保护屏障，调节体温，防止水分流失并合成维生素D。",
     endocrine: "内分泌系统",
-    endocrineDesc: "通过特定腺体和细胞分泌激素，调节新陈代谢、生长与体内稳态。",
+    endocrineDesc: "通过特定腺体和细胞分泌激素，调节新陈代谢、生长与体内稳态。"
+  },
+  theme: {
+    toggle: "切换主题",
+    light: "明亮模式",
+    dark: "暗黑模式"
   }
 };

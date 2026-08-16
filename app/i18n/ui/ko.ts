@@ -228,6 +228,11 @@ export const ui: UiDictionary = {
     integumentary: "외피계",
     integumentaryDesc: "신체 외부 보호 장벽을 형성하고 체온을 조절하며 비타민 D를 합성합니다.",
     endocrine: "내분비계",
-    endocrineDesc: "표적 호르몬 분비를 통해 신진대사, 성장 및 체내 항상성을 조절합니다.",
+    endocrineDesc: "표적 호르몬 분비를 통해 신진대사, 성장 및 체내 항상성을 조절합니다."
+  },
+  theme: {
+    toggle: "테마 전환",
+    light: "라이트 테마",
+    dark: "다크 테마"
   }
 };

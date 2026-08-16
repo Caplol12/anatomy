@@ -228,6 +228,11 @@ export const ui: UiDictionary = {
     integumentary: "Sistem Integumen",
     integumentaryDesc: "Membentuk lapisan pelindung luar tubuh, mengatur suhu, mencegah dehidrasi, dan menyintesis Vitamin D.",
     endocrine: "Sistem Endokrin",
-    endocrineDesc: "Mengatur metabolisme, pertumbuhan, dan homeostasis tubuh melalui sekresi hormon khusus.",
+    endocrineDesc: "Mengatur metabolisme, pertumbuhan, dan homeostasis tubuh melalui sekresi hormon khusus."
+  },
+  theme: {
+    toggle: "Ganti tema",
+    light: "Tema terang",
+    dark: "Tema gelap"
   }
 };

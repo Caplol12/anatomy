@@ -30,6 +30,7 @@ import { NotesModal } from "./NotesModal";
 import { SystemsExplorer } from "./SystemsExplorer";
 import { AtelierLogoIcon } from "./AtelierIcons";
 import { AtelierSplashLoader } from "./AtelierSplashLoader";
+import { ThemeToggle } from "./ThemeToggle";
 import { TypewriterText } from "./TypewriterText";
 import type { OrganId, SystemId } from "../lib/anatomy-data";
 import { BODY_SYSTEMS, SYSTEM_CONFIG_BY_ID } from "../lib/systems";
@@ -421,6 +422,7 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t.search.placeholder} />
         </label>
         <LanguageSwitcher locale={locale} t={t} />
+        <ThemeToggle t={t} />
         <button className="profile" aria-label={t.profile.open}><span>MA</span><ChevronDown size={15} /></button>
         <button className="mobile-library-trigger" onClick={() => setMobileLibrary(true)} aria-label={t.library.open}><LibraryBig size={20} /></button>
       </header>

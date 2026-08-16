@@ -228,6 +228,11 @@ export const ui: UiDictionary = {
     integumentary: "Système Tégumentaire",
     integumentaryDesc: "Constitue la barrière protectrice externe, régule la température et synthétise la vitamine D.",
     endocrine: "Système Endocrinien",
-    endocrineDesc: "Régule le métabolisme, la croissance et l'homéostasie via la sécrétion d'hormones ciblées.",
+    endocrineDesc: "Régule le métabolisme, la croissance et l'homéostasie via la sécrétion d'hormones ciblées."
+  },
+  theme: {
+    toggle: "Changer de thème",
+    light: "Thème clair",
+    dark: "Thème sombre"
   }
 };

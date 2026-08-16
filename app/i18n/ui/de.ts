@@ -228,6 +228,11 @@ export const ui: UiDictionary = {
     integumentary: "Hautsystem",
     integumentaryDesc: "Bildet die äußere Schutzbarriere, reguliert die Temperatur und synthetisiert Vitamin D.",
     endocrine: "Endokrines System",
-    endocrineDesc: "Steuert Stoffwechsel, Wachstum und Gewebehomöostase durch zielgerichtete Hormonsekretion.",
+    endocrineDesc: "Steuert Stoffwechsel, Wachstum und Gewebehomöostase durch zielgerichtete Hormonsekretion."
+  },
+  theme: {
+    toggle: "Design wechseln",
+    light: "Heller Modus",
+    dark: "Dunkler Modus"
   }
 };

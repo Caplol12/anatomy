@@ -228,6 +228,11 @@ export const ui: UiDictionary = {
     integumentary: "外皮系",
     integumentaryDesc: "外部からの保護バリアを形成し、体温調節、水分保持、ビタミンD合成を行います。",
     endocrine: "内分泌系",
-    endocrineDesc: "ホルモン分泌を通じて代謝、成長、全身の恒常性（ホメオスタシス）を制御します。",
+    endocrineDesc: "ホルモン分泌を通じて代謝、成長、全身の恒常性（ホメオスタシス）を制御します。"
+  },
+  theme: {
+    toggle: "テーマを切り替える",
+    light: "ライトテーマ",
+    dark: "ダークテーマ"
   }
 };
