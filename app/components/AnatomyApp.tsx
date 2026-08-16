@@ -1002,7 +1002,9 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
   );
 }
 
-const MODAL_ICON: Record<Exclude<Modal, null>, string> = {
+type LearningModalType = "lesson" | "quiz" | "animation" | "system";
+
+const MODAL_ICON: Record<LearningModalType, string> = {
   quiz: "?",
   animation: "▶",
   system: "⌖",
@@ -1015,7 +1017,7 @@ function LearningModal({
   t,
   onClose,
 }: {
-  type: Exclude<Modal, null>;
+  type: LearningModalType;
   organ: Organ;
   t: UiDictionary;
   onClose: () => void;
