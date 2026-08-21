@@ -2441,15 +2441,25 @@ button.organ-card-image:focus-visible { outline: 2px solid #0891b2; outline-offs
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  transition: max-width 0.25s ease;
+}
+
+/* Journal Sheet View Modal Expansion */
+.learning-modal.notes-modal.notes-journal-view {
+  max-width: 1080px;
+  width: 96%;
+  max-height: 92vh;
+  padding: 20px 24px 22px;
 }
 
 .notes-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-bottom: 16px;
+  padding-bottom: 14px;
   border-bottom: 1px solid var(--line);
   gap: 12px;
+  flex-wrap: wrap;
 }
 .notes-title-group {
   display: flex;
@@ -2462,9 +2472,9 @@ button.organ-card-image:focus-visible { outline: 2px solid #0891b2; outline-offs
   width: 38px;
   height: 38px;
   border-radius: 10px;
-  background: rgba(245, 158, 11, .12);
-  color: #d97706;
-  border: 1px solid rgba(245, 158, 11, .25);
+  background: rgba(13, 148, 136, 0.12);
+  color: #0d9488;
+  border: 1px solid rgba(13, 148, 136, 0.25);
 }
 .notes-title {
   margin: 0;
@@ -2478,6 +2488,57 @@ button.organ-card-image:focus-visible { outline: 2px solid #0891b2; outline-offs
   font-size: 11.5px;
   color: var(--muted);
 }
+
+/* Mode Switcher Tab Group */
+.notes-mode-tab-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--line);
+}
+
+.notes-mode-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.notes-mode-tab:hover {
+  color: var(--ink);
+}
+
+.notes-mode-tab.active {
+  background: #ffffff;
+  color: #0d9488;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.notes-mode-tab .tab-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 99px;
+  background: #0d9488;
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 700;
+}
+
 .notes-new-btn {
   display: inline-flex;
   align-items: center;
@@ -2495,6 +2556,357 @@ button.organ-card-image:focus-visible { outline: 2px solid #0891b2; outline-offs
 .notes-new-btn:hover {
   opacity: .88;
   transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Anatomy Journal Worksheet Canvas & Overlays
+   ========================================================================== */
+
+.worksheet-viewer-root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 14px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.worksheet-nav-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 0 2px;
+}
+
+.worksheet-sheet-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid var(--line);
+  padding: 4px 8px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+}
+
+.sheet-nav-arrow {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: #ffffff;
+  color: var(--ink);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sheet-nav-arrow:hover {
+  background: #0d9488;
+  color: #ffffff;
+  border-color: #0d9488;
+}
+
+.sheet-selector-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 8px;
+}
+
+.sheet-current-name {
+  font-size: 12.5px;
+  color: var(--ink);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.sheet-quick-select {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+}
+
+.worksheet-reset-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--muted);
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.worksheet-reset-btn:hover {
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.3);
+  background: rgba(220, 38, 38, 0.06);
+}
+
+/* Canvas Wrapper (16:9 Aspect Ratio Container) */
+.worksheet-canvas-wrapper {
+  flex: 1;
+  overflow: auto;
+  border-radius: 16px;
+  border: 1.5px solid rgba(45, 106, 106, 0.2);
+  background: #e6eff5;
+  box-shadow: 0 10px 30px rgba(13, 148, 136, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+}
+
+.worksheet-canvas-inner {
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+  aspect-ratio: 16 / 9;
+  user-select: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #ffffff;
+}
+
+.worksheet-base-image {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  display: block;
+  pointer-events: none;
+}
+
+/* -------------------------------------------------------------
+   Interactive Overlays
+   ------------------------------------------------------------- */
+.overlay-field {
+  position: absolute;
+  z-index: 10;
+  box-sizing: border-box;
+}
+
+/* 1. Date Field */
+.overlay-date-field {
+  top: 16.0%;
+  left: 8.5%;
+  width: 16.2%;
+  height: 5.8%;
+  display: flex;
+  align-items: center;
+}
+
+.overlay-input-date {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: inherit;
+  font-size: clamp(10px, 1.3vw, 14px);
+  font-weight: 700;
+  color: #1e3a8a;
+  padding: 0 6px;
+}
+
+.overlay-input-date:focus {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 4px;
+}
+
+/* 2. Main Components Checklist Overlay */
+.overlay-components-checklist {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.component-check-row {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 2px;
+  cursor: pointer;
+}
+
+.component-check-box {
+  width: clamp(10px, 1.25vw, 15px);
+  height: clamp(10px, 1.25vw, 15px);
+  border-radius: 2px;
+  display: grid;
+  place-items: center;
+  color: #0284c7;
+  background: transparent;
+  transition: transform 0.1s ease;
+}
+
+.component-check-row:hover .component-check-box {
+  background: rgba(2, 132, 199, 0.15);
+  transform: scale(1.15);
+}
+
+.component-check-box.checked {
+  background: rgba(2, 132, 199, 0.2);
+}
+
+/* 3. Function Notes Field (عملکرد اجزا) */
+.overlay-function-field {
+  top: 31.5%;
+  left: 52.0%;
+  width: 21.4%;
+  height: 35.8%;
+}
+
+.overlay-textarea {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: transparent;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  font-size: clamp(9px, 1.1vw, 13px);
+  font-weight: 500;
+  color: #0f172a;
+  direction: rtl;
+  padding: 4px 6px;
+  box-sizing: border-box;
+}
+
+.overlay-textarea-lines {
+  line-height: 1.85;
+}
+
+.overlay-textarea:focus {
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 6px;
+}
+
+/* 4. Golden Tips Checkboxes & Notes */
+.overlay-golden-checkboxes {
+  top: 74.2%;
+  left: 51.7%;
+  width: 2.6%;
+  height: 19.5%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.golden-check-row {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.golden-check-box {
+  width: clamp(12px, 1.5vw, 18px);
+  height: clamp(12px, 1.5vw, 18px);
+  border-radius: 3px;
+  display: grid;
+  place-items: center;
+  color: #0d9488;
+  background: transparent;
+  transition: transform 0.1s ease;
+}
+
+.golden-check-row:hover .golden-check-box {
+  background: rgba(13, 148, 136, 0.15);
+  transform: scale(1.15);
+}
+
+.golden-check-box.checked {
+  background: rgba(13, 148, 136, 0.22);
+}
+
+.overlay-golden-notes {
+  top: 74.0%;
+  left: 54.6%;
+  width: 18.8%;
+  height: 19.5%;
+}
+
+.overlay-textarea-golden {
+  line-height: 2.2;
+}
+
+/* 5. Common Diseases Field (بیماری‌ها و اختلالات شایع) */
+.overlay-diseases-field {
+  top: 31.5%;
+  left: 75.8%;
+  width: 21.4%;
+  height: 16.5%;
+}
+
+/* 6. Extra Notes Field (یادداشت‌های اضافی) */
+.overlay-extra-notes-field {
+  top: 54.5%;
+  left: 75.8%;
+  width: 21.4%;
+  height: 20.2%;
+}
+
+.overlay-textarea-extra {
+  line-height: 2.1;
+}
+
+/* 7. Key Vocabulary Table (مرور واژگان کلیدی) */
+.overlay-vocab-table {
+  top: 81.5%;
+  left: 75.8%;
+  width: 21.4%;
+  height: 12.8%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.vocab-row {
+  display: flex;
+  height: 48%;
+  width: 100%;
+}
+
+.overlay-vocab-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-family: inherit;
+  font-size: clamp(8.5px, 1.0vw, 12px);
+  font-weight: 600;
+  color: #0f172a;
+  padding: 0 4px;
+  direction: rtl;
+}
+
+.overlay-vocab-input:focus {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 3px;
+}
+
+.overlay-vocab-term {
+  width: 48%;
+  text-align: center;
+  order: 2;
+}
+
+.overlay-vocab-def {
+  width: 52%;
+  order: 1;
 }
 
 /* Note Composer Box */

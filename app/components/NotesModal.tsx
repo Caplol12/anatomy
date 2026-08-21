@@ -13,6 +13,7 @@ import {
   ArrowRight,
   Sparkles,
   Search,
+  BookOpen,
 } from "lucide-react";
 import type { Organ } from "../i18n/merge";
 import type { UiDictionary } from "../i18n/types";
@@ -24,6 +25,7 @@ import {
   type Note,
   type NoteColor,
 } from "../lib/notes";
+import { JournalWorksheet } from "./JournalWorksheet";
 
 interface NotesModalProps {
   currentOrgan: Organ;
@@ -46,6 +48,7 @@ export function NotesModal({
   onClose,
   initialDraft,
 }: NotesModalProps) {
+  const [activeTab, setActiveTab] = useState<"journal" | "notes">("journal");
   const [selectedFilter, setSelectedFilter] = useState<string>(
     initialDraft?.organId ?? "all"
   );
@@ -99,6 +102,7 @@ export function NotesModal({
   }, [notes]);
 
   const handleStartCompose = (targetOrganId?: string, targetHotspotId?: string) => {
+    setActiveTab("notes");
     setEditingNoteId(null);
     setFormOrganId(targetOrganId || currentOrgan.id);
     setFormHotspotId(targetHotspotId || "");
@@ -109,6 +113,7 @@ export function NotesModal({
   };
 
   const handleStartEdit = (note: Note) => {
+    setActiveTab("notes");
     setEditingNoteId(note.id);
     setFormOrganId(note.organId);
     setFormHotspotId(note.hotspotId || "");
@@ -174,7 +179,7 @@ export function NotesModal({
   return (
     <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
       <section
-        className="learning-modal notes-modal"
+        className={`learning-modal notes-modal ${activeTab === "journal" ? "notes-journal-view" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="notes-modal-title"
@@ -189,23 +194,49 @@ export function NotesModal({
           <X size={18} />
         </button>
 
-        {/* Modal Header */}
+        {/* Modal Header & Tab Switcher */}
         <div className="notes-header">
           <div className="notes-title-group">
             <span className="notes-icon-badge">
-              <NotebookPen size={18} />
+              {activeTab === "journal" ? <BookOpen size={18} /> : <NotebookPen size={18} />}
             </span>
             <div>
               <h2 id="notes-modal-title" className="notes-title">
                 {t.notes.title}
               </h2>
               <p className="notes-subtitle">
-                {format(t.notes.count, { count: String(notes.length) })}
+                {activeTab === "journal"
+                  ? "دفترچه ژورنال و کاربرگ‌های اختصاصی آناتومی"
+                  : format(t.notes.count, { count: String(notes.length) })}
               </p>
             </div>
           </div>
 
-          {!isComposing && (
+          {/* Mode Switcher Tabs */}
+          <div className="notes-mode-tab-group">
+            <button
+              type="button"
+              className={`notes-mode-tab ${activeTab === "journal" ? "active" : ""}`}
+              onClick={() => {
+                setActiveTab("journal");
+                setIsComposing(false);
+              }}
+            >
+              <BookOpen size={14} />
+              <span>دفترچه ژورنال</span>
+            </button>
+            <button
+              type="button"
+              className={`notes-mode-tab ${activeTab === "notes" ? "active" : ""}`}
+              onClick={() => setActiveTab("notes")}
+            >
+              <NotebookPen size={14} />
+              <span>یادداشت‌های سریع</span>
+              {notes.length > 0 && <span className="tab-badge">{notes.length}</span>}
+            </button>
+          </div>
+
+          {activeTab === "notes" && !isComposing && (
             <button
               type="button"
               className="notes-new-btn"
@@ -217,17 +248,30 @@ export function NotesModal({
           )}
         </div>
 
-        {/* Note Composer Form */}
-        {isComposing && (
-          <div className="note-composer-card">
-            <div className="composer-header">
-              <span className="composer-title">
-                {editingNoteId ? t.notes.editNote : t.notes.addNote}
-              </span>
-              <button
-                type="button"
-                className="composer-cancel-btn"
-                onClick={() => {
+        {/* Content View: Journal Sheets or Quick Notes */}
+        {activeTab === "journal" ? (
+          <JournalWorksheet initialOrganId={currentOrgan.id} t={t} />
+        ) : (
+          <>
+            {/* Note Composer Form */}
+            {isComposing && (
+              <div className="note-composer-card">
+                <div className="composer-header">
+                  <span className="composer-title">
+                    {editingNoteId ? t.notes.editNote : t.notes.addNote}
+                  </span>
+                  <button
+                    type="button"
+                    className="composer-cancel-btn"
+                    onClick={() => {
+                      setIsComposing(false);
+                      setEditingNoteId(null);
+                    }}
+                    aria-label={t.notes.cancel}
+                  >
+                    <X size={15} />
+                  </button>
+                </div>
                   setIsComposing(false);
                   setEditingNoteId(null);
                 }}
@@ -533,6 +577,8 @@ export function NotesModal({
             )}
           </div>
         )}
+        </>
+      )}
       </section>
     </div>
   );
