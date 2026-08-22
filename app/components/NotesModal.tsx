@@ -272,14 +272,6 @@ export function NotesModal({
                     <X size={15} />
                   </button>
                 </div>
-                  setIsComposing(false);
-                  setEditingNoteId(null);
-                }}
-                aria-label={t.notes.cancel}
-              >
-                <X size={15} />
-              </button>
-            </div>
 
             {/* Organ & Hotspot Selectors */}
             <div className="composer-selectors">
