@@ -30,6 +30,7 @@ import { AtelierLogoIcon } from "./AtelierIcons";
 import { AtelierSplashLoader } from "./AtelierSplashLoader";
 import { ThemeToggle } from "./ThemeToggle";
 import { TypewriterText } from "./TypewriterText";
+import { AiChatModal, AiChatFab } from "./AiChatModal";
 import type { OrganId, SystemId } from "../lib/anatomy-data";
 import { BODY_SYSTEMS, SYSTEM_CONFIG_BY_ID } from "../lib/systems";
 import type { LocaleConfig } from "../i18n/config";
@@ -142,6 +143,7 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
   const [query, setQuery] = useState("");
   const [mobileLibrary, setMobileLibrary] = useState(false);
   const [quizActive, setQuizActive] = useState(false);
+  const [aiChatOpen, setAiChatOpen] = useState(false);
   const notes = useSyncExternalStore(subscribeNotes, getNotesSnapshot, getNotesServerSnapshot);
   const favorites = useSyncExternalStore(subscribeFavorites, getFavoritesSnapshot, getFavoritesServerSnapshot);
   const [notesDraft, setNotesDraft] = useState<{ organId: string; hotspotId?: string } | undefined>(undefined);
@@ -367,6 +369,14 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
             <NotebookPen size={17} />
             <span>{t.nav.notes}</span>
             {notes.length > 0 && <span className="nav-note-count">{notes.length}</span>}
+          </button>
+          <button
+            onClick={() => setAiChatOpen(true)}
+            className={`ai-nav-btn ${aiChatOpen ? "active" : ""}`}
+            title={t.aiChat.openChat}
+          >
+            <Sparkles size={17} />
+            <span>{t.aiChat.badge}</span>
           </button>
         </nav>
         <label className="search-box">
@@ -768,6 +778,20 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
       ) : (
         modal && <LearningModal type={modal} organ={organ} t={t} onClose={() => setModal(null)} />
       )}
+      
+      <AiChatModal
+        isOpen={aiChatOpen}
+        onClose={() => setAiChatOpen(false)}
+        currentOrgan={organ}
+        locale={locale}
+        t={t}
+      />
+      <AiChatFab
+        onClick={() => setAiChatOpen(true)}
+        isOpen={aiChatOpen}
+        t={t}
+      />
+
       {mobileLibrary && <button className="drawer-backdrop" aria-label={t.library.close} onClick={() => setMobileLibrary(false)} />}
     </main>
     </>

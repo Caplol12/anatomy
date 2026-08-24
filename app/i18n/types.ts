@@ -167,6 +167,44 @@ export type UiDictionary = {
   theme: {
     toggle: string; light: string; dark: string;
   };
+  aiChat: {
+    title: string;
+    subtitle: string;
+    badge: string;
+    openChat: string;
+    closeChat: string;
+    keySettings: string;
+    apiKeyTitle: string;
+    apiKeyDesc: string;
+    apiKeyPlaceholder: string;
+    saveKey: string;
+    testingKey: string;
+    keyValid: string;
+    keyInvalid: string;
+    removeKey: string;
+    getFreeKey: string;
+    privacyNote: string;
+    selectModel: string;
+    currentOrganBadge: string;
+    allOrgansBadge: string;
+    clearChat: string;
+    clearChatConfirm: string;
+    placeholder: string;
+    send: string;
+    stop: string;
+    noKeyPrompt: string;
+    enterKeyButton: string;
+    greeting: string;
+    promptExplain: string;
+    promptConditions: string;
+    promptQuiz: string;
+    promptSystemRole: string;
+    promptMicroscopic: string;
+    copy: string;
+    copied: string;
+    errorPrefix: string;
+    networkHint: string;
+  };
 };
 
 export type Dictionary = { ui: UiDictionary; organs: OrganContentDictionary };
