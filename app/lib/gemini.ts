@@ -37,7 +37,15 @@ export async function validateGeminiApiKey(apiKey: string): Promise<ValidationRe
       return { valid: true };
     }
 
-    const data = await res.json().catch(() => null);
+    interface GeminiErrorResponse {
+      error?: {
+        message?: string;
+        code?: number;
+        status?: string;
+      };
+    }
+
+    const data = (await res.json().catch(() => null)) as GeminiErrorResponse | null;
     const apiError = data?.error?.message || `HTTP ${res.status}: ${res.statusText}`;
 
     if (res.status === 400 || res.status === 403) {
@@ -157,7 +165,7 @@ export async function streamGeminiChat({
   if (!response.ok) {
     let errorDetail = "";
     try {
-      const errJson = await response.json();
+      const errJson = (await response.json()) as { error?: { message?: string } } | null;
       errorDetail = errJson?.error?.message || response.statusText;
     } catch {
       errorDetail = `HTTP ${response.status}: ${response.statusText}`;
@@ -200,7 +208,13 @@ export async function streamGeminiChat({
           if (jsonStr === "[DONE]") continue;
 
           try {
-            const data = JSON.parse(jsonStr);
+            const data = JSON.parse(jsonStr) as {
+              candidates?: Array<{
+                content?: {
+                  parts?: Array<{ text?: string }>;
+                };
+              }>;
+            };
             const candidate = data.candidates?.[0];
             const textPart = candidate?.content?.parts?.[0]?.text;
             if (textPart) {
