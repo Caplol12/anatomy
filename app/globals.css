@@ -4984,50 +4984,49 @@ button.organ-card-image:focus-visible { outline: 2px solid #0891b2; outline-offs
   color: var(--muted);
 }
 
-.ai-input-buttons {
+.ai-md-h1, .ai-md-h2, .ai-md-h3 {
+  margin: 4px 0 2px 0;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ai-md-h1 { font-size: 14.5px; }
+.ai-md-h2 { font-size: 13.5px; }
+.ai-md-h3 { font-size: 13px; }
+
+.ai-md-bullet {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.45;
 }
 
-.ai-send-btn {
-  display: grid;
+.ai-md-bullet-dot {
+  color: #0d9488;
+  font-size: 11px;
+  margin-top: 3px;
+}
+
+[data-theme="dark"] .ai-md-bullet-dot {
+  color: #2dd4bf;
+}
+
+.ai-md-num-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  line-height: 1.45;
+}
+
+.ai-md-num-badge {
+  display: inline-grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  border: 0;
-  background: linear-gradient(135deg, #0d9488, #0891b2);
-  color: #ffffff;
-  cursor: pointer;
-  transition: all 0.18s ease;
-  flex-shrink: 0;
-}
-
-.ai-send-btn:hover:not(:disabled) {
-  transform: scale(1.05);
-}
-
-.ai-send-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.ai-send-btn.stop-btn {
-  background: #ef4444;
-}
-
-.ai-send-btn.stop-btn:hover {
-  background: #dc2626;
-}
-
-@media (max-width: 640px) {
-  .ai-chat-overlay {
-    padding: 0;
-    align-items: stretch;
-  }
-
-  .ai-chat-drawer {
-    width: 100% !important;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(13, 148, 136, 0.15);
+  color: #0d9488;
+  font-size: 10.5px;
   font-weight: 700;
   flex-shrink: 0;
   margin-top: 2px;
@@ -5224,6 +5223,15 @@ button.organ-card-image:focus-visible { outline: 2px solid #0891b2; outline-offs
   .ai-chat-drawer {
     width: 100% !important;
     height: 100vh !important;
+    max-height: 100vh !important;
+    border-radius: 0;
+  }
+
+  .desktop-only {
+    display: none;
+  }
+}
+ht: 100vh !important;
     max-height: 100vh !important;
     border-radius: 0;
   }
