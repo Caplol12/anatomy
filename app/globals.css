@@ -5231,15 +5231,6 @@ button.organ-card-image:focus-visible { outline: 2px solid #0891b2; outline-offs
     display: none;
   }
 }
-ht: 100vh !important;
-    max-height: 100vh !important;
-    border-radius: 0;
-  }
-
-  .desktop-only {
-    display: none;
-  }
-}
 
 /* ==========================================================================
    LIQUID METAL BUTTON SYSTEM (Inspired by @designcodeio/threeui)
