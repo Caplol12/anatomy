@@ -336,7 +336,6 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
               )}
               <sup className="brand-sparkle">✦</sup>
             </strong>
-            <em>{t.brand.tagline}</em>
           </button>
         <nav className="main-nav" aria-label="Primary navigation">
           <button
