@@ -31,6 +31,7 @@ import { AtelierSplashLoader } from "./AtelierSplashLoader";
 import { ThemeToggle } from "./ThemeToggle";
 import { TypewriterText } from "./TypewriterText";
 import { AiChatModal, AiChatFab } from "./AiChatModal";
+import { LiquidMetalButton } from "./LiquidMetalButton";
 import type { OrganId, SystemId } from "../lib/anatomy-data";
 import { BODY_SYSTEMS, SYSTEM_CONFIG_BY_ID } from "../lib/systems";
 import type { LocaleConfig } from "../i18n/config";
@@ -338,45 +339,74 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
             </strong>
           </button>
         <nav className="main-nav" aria-label="Primary navigation">
-          <button
-            className={navView === "explore" ? "active" : ""}
+          <LiquidMetalButton
+            size="pill"
+            variant={navView === "explore" ? "teal" : "silver"}
+            active={navView === "explore"}
+            icon={<Compass size={16} />}
             onClick={() => setNavView("explore")}
           >
-            <Compass size={17} /> {t.nav.explore}
-          </button>
-          <button
-            className={navView === "systems" ? "active" : ""}
+            {t.nav.explore}
+          </LiquidMetalButton>
+
+          <LiquidMetalButton
+            size="pill"
+            variant={navView === "systems" ? "teal" : "silver"}
+            active={navView === "systems"}
+            icon={<BrainCircuit size={16} />}
             onClick={() => {
               setNavView("systems");
               setSelectedSystemId(null);
             }}
           >
-            <BrainCircuit size={17} /> {t.nav.systems}
-          </button>
-          <button onClick={() => setModal("lesson")}><BookOpen size={17} /> {t.nav.lessons}</button>
-          <button onClick={() => {
-            setNavView("explore");
-            setMobileLibrary(true);
-          }}><LibraryBig size={17} /> {t.nav.library}</button>
-          <button
+            {t.nav.systems}
+          </LiquidMetalButton>
+
+          <LiquidMetalButton
+            size="pill"
+            variant="silver"
+            icon={<BookOpen size={16} />}
+            onClick={() => setModal("lesson")}
+          >
+            {t.nav.lessons}
+          </LiquidMetalButton>
+
+          <LiquidMetalButton
+            size="pill"
+            variant="silver"
+            icon={<LibraryBig size={16} />}
+            onClick={() => {
+              setNavView("explore");
+              setMobileLibrary(true);
+            }}
+          >
+            {t.nav.library}
+          </LiquidMetalButton>
+
+          <LiquidMetalButton
+            size="pill"
+            variant={modal === "notes" ? "purple" : "silver"}
+            active={modal === "notes"}
+            icon={<NotebookPen size={16} />}
+            badge={notes.length > 0 ? notes.length : undefined}
             onClick={() => {
               setNotesDraft(undefined);
               setModal("notes");
             }}
-            className={`notes-nav-btn ${modal === "notes" ? "active" : ""}`}
           >
-            <NotebookPen size={17} />
-            <span>{t.nav.notes}</span>
-            {notes.length > 0 && <span className="nav-note-count">{notes.length}</span>}
-          </button>
-          <button
+            {t.nav.notes}
+          </LiquidMetalButton>
+
+          <LiquidMetalButton
+            size="pill"
+            variant="purple"
+            active={aiChatOpen}
+            icon={<Sparkles size={16} />}
             onClick={() => setAiChatOpen(true)}
-            className={`ai-nav-btn ${aiChatOpen ? "active" : ""}`}
             title={t.aiChat.openChat}
           >
-            <Sparkles size={17} />
-            <span>{t.aiChat.badge}</span>
-          </button>
+            {t.aiChat.badge}
+          </LiquidMetalButton>
         </nav>
         <label className="search-box">
           <Search size={17} />
@@ -385,7 +415,14 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
         <LanguageSwitcher locale={locale} t={t} />
         <ThemeToggle t={t} />
         <button className="profile" aria-label={t.profile.open}><span>MA</span><ChevronDown size={15} /></button>
-        <button className="mobile-library-trigger" onClick={() => setMobileLibrary(true)} aria-label={t.library.open}><LibraryBig size={20} /></button>
+        <LiquidMetalButton
+          className="mobile-library-trigger"
+          size="icon"
+          variant="silver"
+          onClick={() => setMobileLibrary(true)}
+          aria-label={t.library.open}
+          icon={<LibraryBig size={18} />}
+        />
       </header>
 
       <div className="workspace">
@@ -683,14 +720,50 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
               <TypewriterText key={`fun-${organ.id}`} text={organ.funFact} speedMs={12} />
             </p>
           </div>
-          <button className="lesson-button" data-reveal onClick={() => setModal("lesson")}>{t.info.viewLesson} <ArrowRight size={16} /></button>
+          <LiquidMetalButton
+            className="lesson-button"
+            variant="teal"
+            size="block"
+            data-reveal
+            onClick={() => setModal("lesson")}
+            iconTrailing={<ArrowRight size={16} />}
+          >
+            {t.info.viewLesson}
+          </LiquidMetalButton>
           <div className="action-grid" data-reveal>
-            <button onClick={() => setModal("animation")}><Play size={15} /> {t.info.animate}</button>
-            <button onClick={() => { setQuizActive(true); setModal(null); }}><CircleHelp size={15} /> {t.info.quiz}</button>
-            <button onClick={() => handleOpenAddNote(organ.id)}>
-              <NotebookPen size={15} /> {t.notes.addNote}
-            </button>
-            <button onClick={() => setCompare(!compare)} className={compare ? "active" : ""}><Share2 size={15} /> {t.info.compare}</button>
+            <LiquidMetalButton
+              variant="cyan"
+              size="sm"
+              onClick={() => setModal("animation")}
+              icon={<Play size={14} />}
+            >
+              {t.info.animate}
+            </LiquidMetalButton>
+            <LiquidMetalButton
+              variant="gold"
+              size="sm"
+              onClick={() => { setQuizActive(true); setModal(null); }}
+              icon={<CircleHelp size={14} />}
+            >
+              {t.info.quiz}
+            </LiquidMetalButton>
+            <LiquidMetalButton
+              variant="purple"
+              size="sm"
+              onClick={() => handleOpenAddNote(organ.id)}
+              icon={<NotebookPen size={14} />}
+            >
+              {t.notes.addNote}
+            </LiquidMetalButton>
+            <LiquidMetalButton
+              variant="teal"
+              size="sm"
+              active={compare}
+              onClick={() => setCompare(!compare)}
+              icon={<Share2 size={14} />}
+            >
+              {t.info.compare}
+            </LiquidMetalButton>
           </div>
         </aside>
       </div>
@@ -701,7 +774,13 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
           <b>{t.compare.vs}</b>
           <div className="compare-organ"><OrganArt organ={reference} asset="thumb" alt="" /><span>{t.compare.reference}</span><strong>{reference.name}</strong><small>{reference.system}</small></div>
           <dl><div><dt>{t.compare.primaryRole}</dt><dd><Measure>{organ.function}</Measure></dd></div><div><dt>{t.compare.scale}</dt><dd><Measure>{organ.size}</Measure></dd></div></dl>
-          <button onClick={() => setCompare(false)} aria-label={t.compare.close}><X size={16} /></button>
+          <LiquidMetalButton
+            size="icon-sm"
+            variant="ruby"
+            onClick={() => setCompare(false)}
+            aria-label={t.compare.close}
+            icon={<X size={15} />}
+          />
         </section>
       )}
 
@@ -712,12 +791,26 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
         <article>
           <header><div><em>{t.cards.microscopic}</em><h3>{organ.tissue}</h3></div><Microscope size={17} /></header>
           <div className="microscope-visual organ-card-image"><OrganArt organ={organ} asset="microscopic" alt="" /></div>
-          <button onClick={() => setModal("lesson")}>{t.cards.exploreTissue} <ArrowRight size={14} /></button>
+          <LiquidMetalButton
+            size="xs"
+            variant="silver"
+            onClick={() => setModal("lesson")}
+            iconTrailing={<ArrowRight size={13} />}
+          >
+            {t.cards.exploreTissue}
+          </LiquidMetalButton>
         </article>
         <article>
           <header><div><em>{t.cards.compareOrgans}</em><h3>{organ.comparison}</h3></div><Share2 size={17} /></header>
           <div className="comparison-visual organ-card-image"><OrganArt organ={organ} asset="compare" alt="" /></div>
-          <button onClick={() => setCompare(true)}>{t.cards.openComparison} <ArrowRight size={14} /></button>
+          <LiquidMetalButton
+            size="xs"
+            variant="silver"
+            onClick={() => setCompare(true)}
+            iconTrailing={<ArrowRight size={13} />}
+          >
+            {t.cards.openComparison}
+          </LiquidMetalButton>
         </article>
         <article>
           <header><div><em>{t.cards.functionAnimation}</em><h3>{organ.function}</h3></div><Play size={17} /></header>
@@ -733,12 +826,26 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
             <i className="function-pulse" />
             <span className="play-badge"><Play size={18} fill="currentColor" /></span>
           </button>
-          <button onClick={() => setModal("animation")}>{t.cards.playAnimation} <ArrowRight size={14} /></button>
+          <LiquidMetalButton
+            size="xs"
+            variant="cyan"
+            onClick={() => setModal("animation")}
+            iconTrailing={<ArrowRight size={13} />}
+          >
+            {t.cards.playAnimation}
+          </LiquidMetalButton>
         </article>
         <article>
           <header><div><em>{t.cards.clinicalNotes}</em><h3>{t.cards.commonConditions}</h3></div><FileText size={17} /></header>
           <ul>{organ.conditions.map((condition) => <li key={condition}>{condition}</li>)}</ul>
-          <button onClick={() => setModal("lesson")}>{t.cards.seeAll} <ArrowRight size={14} /></button>
+          <LiquidMetalButton
+            size="xs"
+            variant="silver"
+            onClick={() => setModal("lesson")}
+            iconTrailing={<ArrowRight size={13} />}
+          >
+            {t.cards.seeAll}
+          </LiquidMetalButton>
         </article>
         <article className="system-card">
           <header><div><em>{t.cards.whereItWorks}</em><h3>{t.systems[organ.systemId] || organ.system}</h3></div><BrainCircuit size={17} /></header>
@@ -753,10 +860,17 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
           >
             <OrganArt organ={organ} asset="location" alt="" />
           </button>
-          <button onClick={() => {
-            setNavView("systems");
-            setSelectedSystemId(organ.systemId);
-          }}>{t.cards.seeSystem} <ArrowRight size={14} /></button>
+          <LiquidMetalButton
+            size="xs"
+            variant="teal"
+            onClick={() => {
+              setNavView("systems");
+              setSelectedSystemId(organ.systemId);
+            }}
+            iconTrailing={<ArrowRight size={13} />}
+          >
+            {t.cards.seeSystem}
+          </LiquidMetalButton>
         </article>
       </section>
 
@@ -835,16 +949,23 @@ function LearningModal({
         aria-labelledby="modal-title"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <button className="modal-close" onClick={onClose} aria-label={t.modal.close}><X size={18} /></button>
+        <LiquidMetalButton
+          className="modal-close"
+          size="icon-sm"
+          variant="ruby"
+          onClick={onClose}
+          aria-label={t.modal.close}
+          icon={<X size={16} />}
+        />
         <span className="modal-icon">{MODAL_ICON[type]}</span>
         <em>{t.modal.guided}</em>
         <h2 id="modal-title">{title}</h2>
         {type === "quiz" ? (
           <div className="quiz-options">
             <p>{format(t.modal.quizPrompt, vars)}</p>
-            <button onClick={onClose}>{t.modal.quizA}</button>
-            <button onClick={onClose}>{t.modal.quizB}</button>
-            <button onClick={onClose}>{t.modal.quizC}</button>
+            <LiquidMetalButton size="md" variant="silver" onClick={onClose}>{t.modal.quizA}</LiquidMetalButton>
+            <LiquidMetalButton size="md" variant="silver" onClick={onClose}>{t.modal.quizB}</LiquidMetalButton>
+            <LiquidMetalButton size="md" variant="silver" onClick={onClose}>{t.modal.quizC}</LiquidMetalButton>
           </div>
         ) : type === "system" ? (
           <>
@@ -859,13 +980,29 @@ function LearningModal({
               <div><dt>{t.modal.primaryRole}</dt><dd><Measure>{organ.function}</Measure></dd></div>
               <div><dt>{t.modal.bloodSupply}</dt><dd><Measure>{organ.bloodSupply}</Measure></dd></div>
             </dl>
-            <button className="lesson-button" onClick={onClose}>{t.modal.continueExploring} <ArrowRight size={16} /></button>
+            <LiquidMetalButton
+              className="lesson-button"
+              size="block"
+              variant="teal"
+              onClick={onClose}
+              iconTrailing={<ArrowRight size={16} />}
+            >
+              {t.modal.continueExploring}
+            </LiquidMetalButton>
           </>
         ) : (
           <>
             <p>{t.modal.lessonBody}</p>
             <div className={`modal-demo ${type === "animation" ? "moving" : ""}`}><OrganArt organ={organ} asset="organ" alt="" /></div>
-            <button className="lesson-button" onClick={onClose}>{t.modal.continueExploring} <ArrowRight size={16} /></button>
+            <LiquidMetalButton
+              className="lesson-button"
+              size="block"
+              variant="teal"
+              onClick={onClose}
+              iconTrailing={<ArrowRight size={16} />}
+            >
+              {t.modal.continueExploring}
+            </LiquidMetalButton>
           </>
         )}
       </section>

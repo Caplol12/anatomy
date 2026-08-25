@@ -15,6 +15,8 @@ import type { UiDictionary } from "../i18n/types";
 import { format } from "../i18n/types";
 import type { LocaleConfig } from "../i18n/config";
 
+import { LiquidMetalButton } from "./LiquidMetalButton";
+
 interface SystemsExplorerProps {
   organs: Organ[];
   activeOrganId: string;
@@ -89,15 +91,15 @@ export function SystemsExplorer({
     return (
       <div className="systems-detail-container">
         <div className="systems-detail-header">
-          <button
-            type="button"
-            className="systems-back-btn"
+          <LiquidMetalButton
+            size="sm"
+            variant="silver"
             onClick={() => onSelectSystem(null)}
             aria-label={t.systems.backToSystems}
+            icon={<ArrowLeft size={15} />}
           >
-            <ArrowLeft size={15} />
-            <span>{t.systems.backToSystems}</span>
-          </button>
+            {t.systems.backToSystems}
+          </LiquidMetalButton>
         </div>
 
         <div
