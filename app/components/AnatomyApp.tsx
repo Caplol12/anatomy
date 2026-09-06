@@ -13,6 +13,7 @@ import {
   FileText,
   Globe,
   Heart,
+  Layers,
   LibraryBig,
   Microscope,
   NotebookPen,
@@ -23,6 +24,7 @@ import {
   Stethoscope,
   X,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { OrganViewer } from "./OrganViewer";
 import { NotesModal } from "./NotesModal";
 import { SystemsExplorer } from "./SystemsExplorer";
@@ -32,6 +34,8 @@ import { ThemeToggle } from "./ThemeToggle";
 import { TypewriterText } from "./TypewriterText";
 import { AiChatModal, AiChatFab } from "./AiChatModal";
 import { LiquidMetalButton } from "./LiquidMetalButton";
+
+const HumanAtlasView = dynamic(() => import("./atlas/HumanAtlasView"), { ssr: false });
 import type { OrganId, SystemId } from "../lib/anatomy-data";
 import { BODY_SYSTEMS, SYSTEM_CONFIG_BY_ID } from "../lib/systems";
 import type { LocaleConfig } from "../i18n/config";
@@ -145,6 +149,22 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
   const [mobileLibrary, setMobileLibrary] = useState(false);
   const [quizActive, setQuizActive] = useState(false);
   const [aiChatOpen, setAiChatOpen] = useState(false);
+  const [atlasOpen, setAtlasOpen] = useState(false);
+  const [currentTheme, setCurrentTheme] = useState<"light" | "dark">("light");
+
+  useEffect(() => {
+    const detectTheme = () => {
+      const attr = document.documentElement.getAttribute("data-theme");
+      if (attr === "dark" || attr === "light") {
+        setCurrentTheme(attr);
+      }
+    };
+    detectTheme();
+    const observer = new MutationObserver(detectTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
+  }, []);
+
   const notes = useSyncExternalStore(subscribeNotes, getNotesSnapshot, getNotesServerSnapshot);
   const favorites = useSyncExternalStore(subscribeFavorites, getFavoritesSnapshot, getFavoritesServerSnapshot);
   const [notesDraft, setNotesDraft] = useState<{ organId: string; hotspotId?: string } | undefined>(undefined);
@@ -406,6 +426,17 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
             title={t.aiChat.openChat}
           >
             {t.aiChat.badge}
+          </LiquidMetalButton>
+
+          <LiquidMetalButton
+            size="pill"
+            variant={atlasOpen ? "purple" : "silver"}
+            active={atlasOpen}
+            icon={<Layers size={16} />}
+            onClick={() => setAtlasOpen(true)}
+            title="نقشه سه‌بعدی بدن انسان (Human Atlas 3D)"
+          >
+            نقشه بدن
           </LiquidMetalButton>
         </nav>
         <label className="search-box">
@@ -906,6 +937,14 @@ export function AnatomyApp({ locale, dictionary }: { locale: LocaleConfig; dicti
       />
 
       {mobileLibrary && <button className="drawer-backdrop" aria-label={t.library.close} onClick={() => setMobileLibrary(false)} />}
+
+      {atlasOpen && (
+        <HumanAtlasView
+          isOpen={atlasOpen}
+          onClose={() => setAtlasOpen(false)}
+          theme={currentTheme}
+        />
+      )}
     </main>
     </>
   );
