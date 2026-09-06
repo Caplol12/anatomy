@@ -1,4 +1,4 @@
-export const ATLAS_BASE_URL = 'https://human-atlas-seven.vercel.app';
+export const ATLAS_BASE_URL = '';
 
 /**
  * Static hosts may serve .gz as a compressed response or as a gzip file.

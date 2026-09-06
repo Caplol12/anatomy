@@ -70,7 +70,7 @@ export default function HumanAtlasView({ isOpen, onClose, theme }: Props) {
     setDetailsOpen(false);
     setState({ ...initialScene, visible: DEFAULT_VISIBLE });
 
-    fetch(`${ATLAS_BASE_URL}/models/atlas.json`, { signal: abort.signal })
+    fetch(`${ATLAS_BASE_URL}/models/atlas/atlas.json`, { signal: abort.signal })
       .then(r => {
         if (!r.ok) throw new Error('فایل مانیفست آناتومی دریافت نشد.');
         return r.json();
