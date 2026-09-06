@@ -28,7 +28,6 @@ import type { Hotspot, Organ } from "../i18n/merge";
 import { format, type UiDictionary } from "../i18n/types";
 import type { AnatomyViewer } from "../lib/three/viewer";
 import type { Note } from "../lib/notes";
-import { LiquidMetalButton } from "./LiquidMetalButton";
 
 type Props = {
   organ: Organ;
@@ -900,18 +899,17 @@ export function OrganViewer({
 
       <div className="viewer-tools" aria-label={t.tools.label}>
         {tools.map(({ id, label, icon: Icon }) => (
-          <LiquidMetalButton
+          <button
             key={id}
-            size="sm"
-            variant={(activeTool === id || (id === "compare" && compare)) ? "cyan" : "silver"}
-            active={activeTool === id || (id === "compare" && compare)}
+            type="button"
+            className={`tool-button ${(activeTool === id || (id === "compare" && compare)) ? "active" : ""}`}
             onClick={() => handleTool(id)}
             aria-pressed={activeTool === id || (id === "compare" && compare)}
             title={label}
-            icon={<Icon size={16} strokeWidth={1.65} />}
           >
-            {label}
-          </LiquidMetalButton>
+            <Icon size={19} strokeWidth={1.65} />
+            <span>{label}</span>
+          </button>
         ))}
       </div>
 
@@ -1024,17 +1022,10 @@ export function OrganViewer({
       )}
 
       {!quizActive && (
-      <LiquidMetalButton
-        className="auto-rotate"
-        size="sm"
-        variant={autoRotate ? "teal" : "silver"}
-        active={autoRotate}
-        onClick={() => onAutoRotate(!autoRotate)}
-        aria-pressed={autoRotate}
-        icon={<RotateCcw size={14} />}
-      >
-        {t.viewer.autoRotate}
-      </LiquidMetalButton>
+      <button className="auto-rotate" type="button" onClick={() => onAutoRotate(!autoRotate)} aria-pressed={autoRotate}>
+        <RotateCcw size={14} /> {t.viewer.autoRotate}
+        <span className={`switch ${autoRotate ? "on" : ""}`}><i /></span>
+      </button>
       )}
 
       <div className="view-caption">

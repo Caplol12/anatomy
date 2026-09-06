@@ -20,7 +20,6 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { LiquidMetalButton } from "./LiquidMetalButton";
 import type { LocaleConfig } from "../i18n/config";
 import type { Organ } from "../i18n/merge";
 import type { UiDictionary } from "../i18n/types";
@@ -423,43 +422,45 @@ export function AiChatModal({
           </div>
 
           <div className="ai-chat-header-actions">
-            <LiquidMetalButton
-              size="icon-sm"
-              variant={showKeySettings ? "purple" : "silver"}
-              active={showKeySettings}
+            <button
+              type="button"
+              className={`ai-header-btn ${showKeySettings ? "active" : ""}`}
               onClick={() => setShowKeySettings(!showKeySettings)}
               title={t.aiChat.keySettings}
               aria-label={t.aiChat.keySettings}
-              icon={<Key size={15} />}
-              badge={!hasApiKey() ? <span className="ai-key-missing-dot" /> : undefined}
-            />
+            >
+              <Key size={17} />
+              {!hasApiKey() && <span className="ai-key-missing-dot" />}
+            </button>
             {chatHistory.length > 0 && (
-              <LiquidMetalButton
-                size="icon-sm"
-                variant="ruby"
+              <button
+                type="button"
+                className="ai-header-btn"
                 onClick={handleClearHistory}
                 title={t.aiChat.clearChat}
                 aria-label={t.aiChat.clearChat}
-                icon={<Trash2 size={15} />}
-              />
+              >
+                <Trash2 size={17} />
+              </button>
             )}
-            <LiquidMetalButton
-              size="icon-sm"
-              variant="silver"
-              className="desktop-only"
+            <button
+              type="button"
+              className="ai-header-btn desktop-only"
               onClick={() => setExpanded(!expanded)}
               title={expanded ? "Restore size" : "Expand"}
               aria-label="Toggle size"
-              icon={expanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
-            />
-            <LiquidMetalButton
-              size="icon-sm"
-              variant="ruby"
+            >
+              {expanded ? <Minimize2 size={17} /> : <Maximize2 size={17} />}
+            </button>
+            <button
+              type="button"
+              className="ai-header-btn close-btn"
               onClick={onClose}
               title={t.aiChat.closeChat}
               aria-label={t.aiChat.closeChat}
-              icon={<X size={17} />}
-            />
+            >
+              <X size={20} />
+            </button>
           </div>
         </header>
 
@@ -602,15 +603,15 @@ export function AiChatModal({
                   </span>
                   <div className="ai-quick-chips-grid">
                     {quickPrompts.map((p, idx) => (
-                      <LiquidMetalButton
+                      <button
                         key={idx}
-                        size="sm"
-                        variant="purple"
+                        type="button"
+                        className="ai-quick-chip"
                         onClick={() => handleSendMessage(p.label)}
-                        icon={<span className="ai-chip-icon">{p.icon}</span>}
                       >
-                        {p.label}
-                      </LiquidMetalButton>
+                        <span className="ai-chip-icon">{p.icon}</span>
+                        <span className="ai-chip-text">{p.label}</span>
+                      </button>
                     ))}
                   </div>
                 </div>
@@ -708,24 +709,25 @@ export function AiChatModal({
 
               <div className="ai-input-buttons">
                 {isGenerating ? (
-                  <LiquidMetalButton
-                    size="icon-sm"
-                    variant="ruby"
+                  <button
+                    type="button"
+                    className="ai-send-btn stop-btn"
                     onClick={handleStopGenerating}
                     title={t.aiChat.stop}
                     aria-label={t.aiChat.stop}
-                    icon={<Square size={15} />}
-                  />
+                  >
+                    <Square size={16} />
+                  </button>
                 ) : (
-                  <LiquidMetalButton
-                    size="icon-sm"
-                    variant="teal"
+                  <button
                     type="submit"
+                    className="ai-send-btn"
                     disabled={!inputPrompt.trim()}
                     title={t.aiChat.send}
                     aria-label={t.aiChat.send}
-                    icon={<Send size={15} />}
-                  />
+                  >
+                    <Send size={16} />
+                  </button>
                 )}
               </div>
             </form>
@@ -737,7 +739,7 @@ export function AiChatModal({
 }
 
 /**
- * Floating trigger button for opening the AI Chatbot with Liquid Metal Orb finish.
+ * Floating trigger button for opening the AI Chatbot.
  */
 export function AiChatFab({
   onClick,
@@ -754,18 +756,19 @@ export function AiChatFab({
   if (isOpen) return null;
 
   return (
-    <div className="ai-chat-fab-metal">
-      <div className="ai-chat-fab-glow" aria-hidden="true" />
-      <LiquidMetalButton
-        size="icon-lg"
-        variant="purple"
-        glow={true}
-        onClick={onClick}
-        aria-label={t.aiChat.openChat}
-        title={t.aiChat.openChat}
-        icon={<Sparkles size={22} />}
-        badge={!keyConfigured ? <span className="ai-fab-badge-dot" /> : undefined}
-      />
-    </div>
+    <button
+      type="button"
+      className="ai-chat-fab"
+      onClick={onClick}
+      aria-label={t.aiChat.openChat}
+      title={t.aiChat.openChat}
+    >
+      <div className="ai-fab-glow" aria-hidden="true" />
+      <div className="ai-fab-inner">
+        <Sparkles size={20} className="ai-fab-icon" />
+        <span className="ai-fab-label">{t.aiChat.badge}</span>
+        {!keyConfigured && <span className="ai-fab-badge-dot" />}
+      </div>
+    </button>
   );
 }

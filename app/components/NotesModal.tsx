@@ -18,7 +18,6 @@ import {
 import type { Organ } from "../i18n/merge";
 import type { UiDictionary } from "../i18n/types";
 import { format } from "../i18n/types";
-import { LiquidMetalButton } from "./LiquidMetalButton";
 import {
   NOTE_COLORS,
   createNote,
@@ -186,14 +185,14 @@ export function NotesModal({
         aria-labelledby="notes-modal-title"
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <LiquidMetalButton
+        <button
           className="modal-close"
-          size="icon-sm"
-          variant="ruby"
           onClick={onClose}
           aria-label={t.modal.close}
-          icon={<X size={16} />}
-        />
+          type="button"
+        >
+          <X size={18} />
+        </button>
 
         {/* Modal Header & Tab Switcher */}
         <div className="notes-header">
@@ -215,39 +214,37 @@ export function NotesModal({
 
           {/* Mode Switcher Tabs */}
           <div className="notes-mode-tab-group">
-            <LiquidMetalButton
-              size="sm"
-              variant={activeTab === "journal" ? "teal" : "silver"}
-              active={activeTab === "journal"}
+            <button
+              type="button"
+              className={`notes-mode-tab ${activeTab === "journal" ? "active" : ""}`}
               onClick={() => {
                 setActiveTab("journal");
                 setIsComposing(false);
               }}
-              icon={<BookOpen size={14} />}
             >
-              دفترچه ژورنال
-            </LiquidMetalButton>
-            <LiquidMetalButton
-              size="sm"
-              variant={activeTab === "notes" ? "purple" : "silver"}
-              active={activeTab === "notes"}
+              <BookOpen size={14} />
+              <span>دفترچه ژورنال</span>
+            </button>
+            <button
+              type="button"
+              className={`notes-mode-tab ${activeTab === "notes" ? "active" : ""}`}
               onClick={() => setActiveTab("notes")}
-              icon={<NotebookPen size={14} />}
-              badge={notes.length > 0 ? notes.length : undefined}
             >
-              یادداشت‌های سریع
-            </LiquidMetalButton>
+              <NotebookPen size={14} />
+              <span>یادداشت‌های سریع</span>
+              {notes.length > 0 && <span className="tab-badge">{notes.length}</span>}
+            </button>
           </div>
 
           {activeTab === "notes" && !isComposing && (
-            <LiquidMetalButton
-              size="sm"
-              variant="purple"
+            <button
+              type="button"
+              className="notes-new-btn"
               onClick={() => handleStartCompose(currentOrgan.id)}
-              icon={<Plus size={15} />}
             >
-              {t.notes.addNote}
-            </LiquidMetalButton>
+              <Plus size={15} />
+              <span>{t.notes.addNote}</span>
+            </button>
           )}
         </div>
 
@@ -352,25 +349,31 @@ export function NotesModal({
               </div>
 
               <div className="composer-actions">
-                <LiquidMetalButton
-                  size="sm"
-                  variant="silver"
+                <button
+                  type="button"
+                  className="composer-btn-secondary"
                   onClick={() => {
                     setIsComposing(false);
                     setEditingNoteId(null);
                   }}
                 >
                   {t.notes.cancel}
-                </LiquidMetalButton>
-                <LiquidMetalButton
-                  size="sm"
-                  variant={saveSuccess ? "teal" : "purple"}
+                </button>
+                <button
+                  type="button"
+                  className={`composer-btn-primary ${saveSuccess ? "saved" : ""}`}
                   onClick={handleSave}
                   disabled={!formText.trim()}
-                  icon={saveSuccess ? <Check size={15} /> : undefined}
                 >
-                  {saveSuccess ? t.notes.savedSuccess : t.notes.saveNote}
-                </LiquidMetalButton>
+                  {saveSuccess ? (
+                    <>
+                      <Check size={15} />
+                      <span>{t.notes.savedSuccess}</span>
+                    </>
+                  ) : (
+                    <span>{t.notes.saveNote}</span>
+                  )}
+                </button>
               </div>
             </div>
           </div>
