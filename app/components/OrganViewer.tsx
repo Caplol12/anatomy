@@ -1023,8 +1023,9 @@ export function OrganViewer({
 
       {!quizActive && (
       <button className="auto-rotate" type="button" onClick={() => onAutoRotate(!autoRotate)} aria-pressed={autoRotate}>
-        <RotateCcw size={14} /> {t.viewer.autoRotate}
-        <span className={`switch ${autoRotate ? "on" : ""}`}><i /></span>
+        <RotateCcw size={14} />
+        <span>{t.viewer.autoRotate}</span>
+        <span className={`switch ${autoRotate ? "on" : ""}`} aria-hidden="true"><i /></span>
       </button>
       )}
 
